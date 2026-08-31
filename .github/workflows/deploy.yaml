@@ -37,14 +37,20 @@ jobs:
       - name: Construir el sitio
         run: npx quartz build
 
+      # GitHub Pages no esta disponible en repos privados con el plan
+      # gratuito, asi que el despliegue se salta mientras el repo lo sea.
+      # En cuanto pase a publico se activa solo, sin tocar nada aqui.
       - uses: actions/configure-pages@v5
+        if: ${{ !github.event.repository.private }}
 
       - uses: actions/upload-pages-artifact@v3
+        if: ${{ !github.event.repository.private }}
         with:
           path: public
 
   desplegar:
     needs: construir
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
