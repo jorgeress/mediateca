@@ -1,0 +1,16 @@
+.DS_Store
+node_modules
+public
+prof
+tsconfig.tsbuildinfo
+.quartz-cache
+.quartz/
+.turbo/
+quartz/cli/tui/dist/
+
+# De la vault se versiona la configuracion (plantillas, plugins activos)
+# pero no el estado local de la ventana ni la papelera.
+content/.obsidian/workspace.json
+content/.obsidian/workspace-mobile.json
+content/.obsidian/cache
+content/.trash/

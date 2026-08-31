@@ -1,0 +1,55 @@
+filters:
+  and:
+    - note.tipo == "libro"
+properties:
+  note.year:
+    displayName: Año
+  note.autor:
+    displayName: Autor
+  note.nota:
+    displayName: Nota
+  note.estado:
+    displayName: Estado
+views:
+  - type: cards
+    name: Galería
+    image: note.portada
+    cardSize: 220
+    imageAspectRatio: 1.4
+    order:
+      - file.name
+      - note.autor
+      - note.year
+      - note.nota
+    sort:
+      - property: note.nota
+        direction: DESC
+  - type: table
+    name: Tabla
+    order:
+      - file.name
+      - note.autor
+      - note.year
+      - note.nota
+      - note.estado
+    sort:
+      - property: note.nota
+        direction: DESC
+    summaries:
+      note.nota: Average
+  - type: cards
+    name: Solo favoritos
+    image: note.portada
+    cardSize: 220
+    imageAspectRatio: 1.4
+    filters:
+      and:
+        - note.favorito == true
+    order:
+      - file.name
+      - note.autor
+      - note.year
+      - note.nota
+    sort:
+      - property: note.nota
+        direction: DESC

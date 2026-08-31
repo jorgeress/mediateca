@@ -1,0 +1,36 @@
+filters:
+  and:
+    - note.nota >= 9
+properties:
+  note.tipo:
+    displayName: Tipo
+  note.autor:
+    displayName: Autor
+  note.nota:
+    displayName: Nota
+  note.year:
+    displayName: Año
+views:
+  - type: cards
+    name: Lo mejor de todo
+    image: note.portada
+    cardSize: 200
+    imageAspectRatio: 1.4
+    order:
+      - file.name
+      - note.autor
+      - note.nota
+    sort:
+      - property: note.nota
+        direction: DESC
+  - type: board
+    name: Por tipo
+    groupBy:
+      property: note.tipo
+    order:
+      - file.name
+      - note.autor
+      - note.nota
+    sort:
+      - property: note.nota
+        direction: DESC
