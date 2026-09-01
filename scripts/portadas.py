@@ -1,0 +1,258 @@
+#!/usr/bin/env python3
+"""Baja la portada de cada ficha y la deja en assets/portadas/ como WebP.
+
+Cada seccion tira de la fuente que mejor la conoce:
+
+  juegos  Steam (busqueda publica, sin clave)
+  libros  Open Library (sin clave)
+  musica  MusicBrainz + Cover Art Archive (sin clave)
+  pelis   TMDB (clave gratuita en TMDB_API_KEY o ~/.config/mediateca/tmdb)
+
+Uso:
+  scripts/portadas.py                 rellena las fichas sin portada
+  scripts/portadas.py --force         rehace tambien las que ya la tienen
+  scripts/portadas.py --seccion pelis solo esa carpeta
+  scripts/portadas.py --dry-run       dice que bajaria, sin tocar nada
+  scripts/portadas.py content/juegos/Hollow\\ Knight.md   una ficha suelta
+"""
+
+import argparse
+import json
+import os
+import re
+import sys
+import time
+import unicodedata
+import urllib.parse
+import urllib.request
+from io import BytesIO
+from pathlib import Path
+
+from PIL import Image
+
+RAIZ = Path(__file__).resolve().parent.parent
+VAULT = RAIZ / "content"
+PORTADAS = VAULT / "assets" / "portadas"
+SECCIONES = {"juegos": "juego", "pelis": "peli", "libros": "libro", "musica": "album"}
+
+# MusicBrainz exige un User-Agent que identifique a quien llama.
+UA = "mediateca/1.0 (https://github.com/jorgeress/mediateca)"
+ANCHO = 400  # las tarjetas miden 220 px; 400 cubre pantallas 2x
+
+FRONT_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
+
+
+def pedir(url, headers=None, binario=False, reintentos=3):
+    req = urllib.request.Request(url, headers={"User-Agent": UA, **(headers or {})})
+    for intento in range(reintentos):
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                datos = r.read()
+            return datos if binario else json.loads(datos)
+        except Exception as e:
+            if intento == reintentos - 1:
+                return None
+            time.sleep(1.5 * (intento + 1))
+            del e
+    return None
+
+
+def frontmatter(texto):
+    """Lee las claves planas de la cabecera. No hace falta un YAML completo."""
+    m = FRONT_RE.match(texto)
+    if not m:
+        return {}
+    campos = {}
+    for linea in m.group(1).splitlines():
+        if linea.startswith((" ", "-", "#")) or ":" not in linea:
+            continue
+        clave, _, valor = linea.partition(":")
+        campos[clave.strip()] = valor.strip().strip('"').strip("'")
+    return campos
+
+
+def escribir_portada(md, nombre):
+    texto = md.read_text(encoding="utf-8")
+    m = FRONT_RE.match(texto)
+    if not m:
+        return False
+    cabecera = m.group(1)
+    linea = f'portada: "[[{nombre}]]"'
+    if re.search(r"^portada:.*$", cabecera, re.M):
+        nueva = re.sub(r"^portada:.*$", linea, cabecera, count=1, flags=re.M)
+    else:
+        nueva = cabecera + "\n" + linea
+    md.write_text(texto.replace(cabecera, nueva, 1), encoding="utf-8")
+    return True
+
+
+def slug(nombre):
+    base = unicodedata.normalize("NFKD", nombre).encode("ascii", "ignore").decode()
+    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", base.lower())).strip("-")
+
+
+def normal(s):
+    return re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", s or "")
+                  .encode("ascii", "ignore").decode().lower())
+
+
+def guardar(datos, destino, cuadrada=False):
+    img = Image.open(BytesIO(datos))
+    if img.mode not in ("RGB", "RGBA"):
+        img = img.convert("RGB")
+    alto = round(img.height * ANCHO / img.width)
+    img = img.resize((ANCHO, alto), Image.LANCZOS)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    img.save(destino, "WEBP", quality=82, method=6)
+    del cuadrada
+    return destino.stat().st_size
+
+
+# --- fuentes -----------------------------------------------------------------
+
+def portada_juego(titulo, campos):
+    del campos
+    url = "https://steamcommunity.com/actions/SearchApps/" + urllib.parse.quote(titulo)
+    res = pedir(url) or []
+    if not res:
+        return None, None
+    exacto = next((a for a in res if normal(a.get("name")) == normal(titulo)), res[0])
+    appid = exacto["appid"]
+    for archivo in ("library_600x900_2x.jpg", "library_600x900.jpg", "header.jpg"):
+        img = pedir(f"https://cdn.cloudflare.steamstatic.com/steam/apps/{appid}/{archivo}",
+                    binario=True)
+        if img and len(img) > 5000:
+            return img, f"Steam ({exacto['name']})"
+    return None, None
+
+
+def portada_libro(titulo, campos):
+    consulta = " ".join(filter(None, [titulo, campos.get("autor")]))
+    url = ("https://openlibrary.org/search.json?limit=5"
+           "&fields=title,author_name,cover_i,first_publish_year&q="
+           + urllib.parse.quote(consulta))
+    datos = pedir(url) or {}
+    for doc in datos.get("docs", []):
+        if not doc.get("cover_i"):
+            continue
+        img = pedir(f"https://covers.openlibrary.org/b/id/{doc['cover_i']}-L.jpg",
+                    binario=True)
+        if img and len(img) > 5000:
+            return img, f"Open Library ({doc.get('title')})"
+    return None, None
+
+
+def portada_album(titulo, campos):
+    consulta = f'releasegroup:"{titulo}"'
+    if campos.get("autor"):
+        consulta += f' AND artist:"{campos["autor"]}"'
+    url = ("https://musicbrainz.org/ws/2/release-group?fmt=json&limit=5&query="
+           + urllib.parse.quote(consulta))
+    datos = pedir(url) or {}
+    time.sleep(1.1)  # MusicBrainz pide como mucho una consulta por segundo
+    for grupo in datos.get("release-groups", []):
+        img = pedir(f"https://coverartarchive.org/release-group/{grupo['id']}/front-500",
+                    binario=True)
+        if img and len(img) > 5000:
+            return img, f"Cover Art Archive ({grupo.get('title')})"
+    return None, None
+
+
+def clave_tmdb():
+    if os.environ.get("TMDB_API_KEY"):
+        return os.environ["TMDB_API_KEY"].strip()
+    fichero = Path.home() / ".config" / "mediateca" / "tmdb"
+    return fichero.read_text().strip() if fichero.exists() else None
+
+
+def portada_peli(titulo, campos):
+    clave = clave_tmdb()
+    if not clave:
+        return None, "SIN_CLAVE"
+    params = {"api_key": clave, "query": titulo, "language": "es-ES"}
+    if campos.get("year"):
+        params["year"] = campos["year"]
+    datos = pedir("https://api.themoviedb.org/3/search/movie?"
+                  + urllib.parse.urlencode(params)) or {}
+    for peli in datos.get("results", []):
+        if not peli.get("poster_path"):
+            continue
+        img = pedir("https://image.tmdb.org/t/p/w500" + peli["poster_path"], binario=True)
+        if img and len(img) > 5000:
+            return img, f"TMDB ({peli.get('title')})"
+    return None, None
+
+
+FUENTES = {"juego": portada_juego, "peli": portada_peli,
+           "libro": portada_libro, "album": portada_album}
+
+
+# --- recorrido ---------------------------------------------------------------
+
+def fichas(args):
+    if args.ficha:
+        return [Path(f).resolve() for f in args.ficha]
+    carpetas = [args.seccion] if args.seccion else SECCIONES
+    salida = []
+    for carpeta in carpetas:
+        salida += sorted(p for p in (VAULT / carpeta).glob("*.md") if p.stem != "index")
+    return salida
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("ficha", nargs="*", help="fichas sueltas; por defecto, todas")
+    p.add_argument("--seccion", choices=list(SECCIONES), help="solo una carpeta")
+    p.add_argument("--force", action="store_true", help="rehace las que ya tienen portada")
+    p.add_argument("--dry-run", action="store_true", help="no baja ni escribe nada")
+    args = p.parse_args()
+
+    faltan_claves = False
+    hechas = fallidas = saltadas = 0
+
+    for md in fichas(args):
+        campos = frontmatter(md.read_text(encoding="utf-8"))
+        tipo = campos.get("tipo") or SECCIONES.get(md.parent.name)
+        titulo = campos.get("title") or md.stem
+        etiqueta = f"{md.parent.name}/{md.stem}"
+
+        if campos.get("portada") and not args.force:
+            saltadas += 1
+            continue
+        if tipo not in FUENTES:
+            print(f"  ?  {etiqueta}: tipo '{tipo}' desconocido")
+            fallidas += 1
+            continue
+        if args.dry_run:
+            print(f"  ·  {etiqueta}: buscaria en {FUENTES[tipo].__name__}")
+            continue
+
+        img, fuente = FUENTES[tipo](titulo, campos)
+        if fuente == "SIN_CLAVE":
+            faltan_claves = True
+            fallidas += 1
+            continue
+        if not img:
+            print(f"  ✗  {etiqueta}: sin portada en la fuente")
+            fallidas += 1
+            continue
+
+        nombre = f"{slug(titulo)}.webp"
+        peso = guardar(img, PORTADAS / nombre)
+        escribir_portada(md, nombre)
+        print(f"  ✓  {etiqueta}: {nombre}, {peso // 1024} KB, {fuente}")
+        hechas += 1
+
+    print(f"\n{hechas} portadas nuevas, {fallidas} sin resolver, "
+          f"{saltadas} ya la tenian.")
+    if faltan_claves:
+        print("\nLas películas necesitan una clave gratuita de TMDB:\n"
+              "  https://www.themoviedb.org/settings/api\n"
+              "  mkdir -p ~/.config/mediateca && "
+              "echo TU_CLAVE > ~/.config/mediateca/tmdb")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

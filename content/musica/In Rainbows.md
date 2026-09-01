@@ -5,7 +5,7 @@ autor: Radiohead
 nota: 10
 estado: escuchado
 favorito: true
-portada:
+portada: "[[in-rainbows.webp]]"
 tags:
   - rock-alternativo
 ---

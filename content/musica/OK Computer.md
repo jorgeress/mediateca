@@ -5,7 +5,7 @@ autor: Radiohead
 nota: 9
 estado: escuchado
 favorito: false
-portada:
+portada: "[[ok-computer.webp]]"
 tags:
   - rock-alternativo
 ---

@@ -5,7 +5,7 @@ autor: Daft Punk
 nota: 9
 estado: escuchado
 favorito: true
-portada:
+portada: "[[random-access-memories.webp]]"
 tags:
   - electronica
   - disco

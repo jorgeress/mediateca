@@ -5,7 +5,7 @@ autor: CD Projekt Red
 nota: 9
 estado: terminado
 favorito: false
-portada:
+portada: "[[the-witcher-3.webp]]"
 tags:
   - rpg
   - mundo-abierto

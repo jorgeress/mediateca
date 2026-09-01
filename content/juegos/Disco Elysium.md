@@ -5,7 +5,7 @@ autor: ZA/UM
 nota: 10
 estado: terminado
 favorito: true
-portada:
+portada: "[[disco-elysium.webp]]"
 tags:
   - rpg
   - narrativa

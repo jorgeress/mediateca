@@ -15,7 +15,7 @@ views:
     name: Lo mejor de todo
     image: note.portada
     cardSize: 200
-    imageAspectRatio: 1.4
+    imageAspectRatio: 1
     order:
       - file.name
       - note.autor

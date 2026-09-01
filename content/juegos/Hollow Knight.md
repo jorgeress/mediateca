@@ -5,7 +5,7 @@ autor: Team Cherry
 nota: 9
 estado: terminado
 favorito: true
-portada:
+portada: "[[hollow-knight.webp]]"
 tags:
   - metroidvania
   - plataformas

@@ -5,7 +5,7 @@ autor: Patrick Rothfuss
 nota: 8
 estado: leido
 favorito: false
-portada:
+portada: "[[el-nombre-del-viento.webp]]"
 tags:
   - fantasia
 ---

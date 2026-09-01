@@ -13,43 +13,43 @@ properties:
 views:
   - type: cards
     name: Galería
-    image: note.portada
-    cardSize: 220
-    imageAspectRatio: 1.4
     order:
       - file.name
-      - note.autor
-      - note.year
-      - note.nota
+      - autor
+      - year
+      - nota
     sort:
-      - property: note.nota
+      - property: nota
         direction: DESC
+    image: note.portada
+    cardSize: 220
+    imageAspectRatio: 1
   - type: table
     name: Tabla
     order:
       - file.name
-      - note.autor
-      - note.year
-      - note.nota
-      - note.estado
+      - autor
+      - year
+      - nota
+      - estado
     sort:
-      - property: note.nota
+      - property: nota
         direction: DESC
     summaries:
-      note.nota: Average
+      nota: Average
   - type: cards
     name: Solo favoritos
-    image: note.portada
-    cardSize: 220
-    imageAspectRatio: 1.4
     filters:
       and:
         - note.favorito == true
     order:
       - file.name
-      - note.autor
-      - note.year
-      - note.nota
+      - autor
+      - year
+      - nota
     sort:
-      - property: note.nota
+      - property: nota
         direction: DESC
+    image: note.portada
+    cardSize: 220
+    imageAspectRatio: 1

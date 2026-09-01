@@ -5,7 +5,7 @@ autor: Frank Herbert
 nota: 10
 estado: leido
 favorito: true
-portada:
+portada: "[[dune.webp]]"
 tags:
   - ciencia-ficcion
 ---
