@@ -89,6 +89,8 @@ content/            la vault de Obsidian: lo único que se escribe a mano
   _plantillas/      plantilla de ficha (no se publica)
   assets/portadas/  imágenes
 scripts/
+  importar.py       crea fichas desde Letterboxd, Steam y Spotify
+  mediateca.py      lo que comparten los dos scripts
   portadas.py       baja las carátulas y rellena el campo `portada`
 quartz/             el generador (fork de Quartz, no se toca)
 quartz.config.yaml  configuración del sitio
@@ -144,6 +146,50 @@ Con la plantilla de `_plantillas/Ficha.md` (`Ctrl+P` → *Insertar plantilla*),
 en la carpeta de su sección. En cuanto tenga `tipo` y `nota`, aparece sola en
 la galería, en la tabla y, si llega al 9, en el *Top*. No hay que tocar ningún
 índice.
+
+## Traer lo que ya tienes en otros sitios
+
+`scripts/importar.py` crea fichas a partir de Letterboxd, Steam y Spotify. No
+pisa nunca una ficha que ya exista, así que se puede repetir cuando quieras
+para recoger solo lo nuevo, y avisa cuando algo se parece a lo que ya tienes
+(el *Witcher 3* de Steam se llama *The Witcher 3: Wild Hunt*, y esa la unes tú).
+
+```bash
+scripts/importar.py letterboxd ~/Descargas/letterboxd-export.zip
+scripts/importar.py steam ~/Descargas/steam-export.zip
+scripts/importar.py spotify
+scripts/importar.py --dry-run letterboxd ...   # dice qué haría, sin escribir
+```
+
+**Todo entra en borrador**, con `draft: true`, `nota` vacía y el cuerpo en
+blanco. Quartz no publica lo que lleva `draft`, así que la web sigue enseñando
+solo lo que hayas ascendido a mano, mientras que en Obsidian se ven todas. Para
+ascender una ficha se le quita la línea `draft` y se le pone nota y las dos
+frases del porqué, que es lo único que estas fuentes no saben. Si prefieres que
+entren publicadas directamente, `--sin-borrador`.
+
+Cada fuente da lo suyo, y ninguna lo da todo:
+
+| Fuente | Cómo | Qué trae |
+| --- | --- | --- |
+| Letterboxd | `Settings` → `Import & Export` → `Export your data` | Título, año y **tu puntuación**, que pasa de estrellas a la escala de 1 a 10. La *watchlist* entra como `pendiente`. |
+| Steam | `Ayuda` → `Datos personales` → descargar | Título y horas jugadas, en el campo `horas`. |
+| Spotify | Una app propia en su *dashboard*, autorizada una vez desde el navegador | Álbumes guardados, con artista y año. |
+
+Letterboxd es la única de las tres que sabe si algo te gustó. Steam sabe cuánto
+jugaste, que no es lo mismo (por eso lo jugado entra como `en curso` y no como
+`terminado`: eso no lo puede deducir nadie), y Spotify solo sabe que le diste a
+guardar. De ahí que el volcado sea un punto de partida y no el resultado.
+
+Para Spotify hace falta un *client id*, que no es un secreto y no se guarda en
+el repositorio: se crea una app en
+[developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) con
+`http://127.0.0.1:8888/callback` como *Redirect URI* y se deja el id en
+`~/.config/mediateca/spotify-client-id`. No hace falta el *client secret*: la
+autorización va por PKCE, y el permiso que pide es solo de lectura de tu
+biblioteca.
+
+Después de importar, `scripts/portadas.py` le pone carátula a todo lo nuevo.
 
 ## Portadas
 
@@ -222,6 +268,9 @@ películas y libros, y `1` en música y en el *Top*, que es un mosaico cuadrado.
   se veía era el contador de resultados, y está oculto por CSS. Si algún día
   aparece otro, habrá que traducirlo a mano.
 - Las fichas que hay ahora son de ejemplo, para que el sitio no se viera vacío.
+- El export de Steam ha cambiado de formato varias veces, así que el importador
+  rastrea el JSON entero buscando cosas con `appid` y nombre en vez de dar por
+  buena una ruta concreta. Si algún día deja de encontrarlos, es ahí.
 
 ## Licencia y créditos
 

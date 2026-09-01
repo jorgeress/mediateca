@@ -17,3 +17,7 @@ content/.trash/
 
 # Obsidian abierto por error sobre la raiz del repo: la vault es content/
 /.obsidian/
+
+# Cache de los scripts de Python
+__pycache__/
+*.pyc

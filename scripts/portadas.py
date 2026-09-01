@@ -17,57 +17,19 @@ Uso:
 """
 
 import argparse
-import json
 import re
 import sys
 import time
-import unicodedata
 import urllib.parse
-import urllib.request
 from io import BytesIO
 from pathlib import Path
 
 from PIL import Image
 
-RAIZ = Path(__file__).resolve().parent.parent
-VAULT = RAIZ / "content"
-PORTADAS = VAULT / "assets" / "portadas"
-SECCIONES = {"juegos": "juego", "pelis": "peli", "libros": "libro", "musica": "album"}
+from mediateca import (FRONT_RE, PORTADAS, SECCIONES, VAULT, frontmatter, normal,
+                       pedir, slug)
 
-# MusicBrainz exige un User-Agent que identifique a quien llama.
-UA = "mediateca/1.0 (https://github.com/jorgeress/mediateca)"
 ANCHO = 400  # las tarjetas miden 220 px; 400 cubre pantallas 2x
-
-FRONT_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
-
-
-def pedir(url, headers=None, binario=False, reintentos=3):
-    req = urllib.request.Request(url, headers={"User-Agent": UA, **(headers or {})})
-    for intento in range(reintentos):
-        try:
-            with urllib.request.urlopen(req, timeout=20) as r:
-                datos = r.read()
-            return datos if binario else json.loads(datos)
-        except Exception as e:
-            if intento == reintentos - 1:
-                return None
-            time.sleep(1.5 * (intento + 1))
-            del e
-    return None
-
-
-def frontmatter(texto):
-    """Lee las claves planas de la cabecera. No hace falta un YAML completo."""
-    m = FRONT_RE.match(texto)
-    if not m:
-        return {}
-    campos = {}
-    for linea in m.group(1).splitlines():
-        if linea.startswith((" ", "-", "#")) or ":" not in linea:
-            continue
-        clave, _, valor = linea.partition(":")
-        campos[clave.strip()] = valor.strip().strip('"').strip("'")
-    return campos
 
 
 def escribir_portada(md, nombre):
@@ -83,16 +45,6 @@ def escribir_portada(md, nombre):
         nueva = cabecera + "\n" + linea
     md.write_text(texto.replace(cabecera, nueva, 1), encoding="utf-8")
     return True
-
-
-def slug(nombre):
-    base = unicodedata.normalize("NFKD", nombre).encode("ascii", "ignore").decode()
-    return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", base.lower())).strip("-")
-
-
-def normal(s):
-    return re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", s or "")
-                  .encode("ascii", "ignore").decode().lower())
 
 
 def guardar(datos, destino, cuadrada=False):
