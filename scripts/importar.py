@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Crea fichas en la vault a partir de lo que ya tienes en otros sitios.
 
-  scripts/importar.py letterboxd RUTA       export de Letterboxd (necesita Pro)
-  scripts/importar.py letterboxd-rss USUARIO   su diario publico, sin Pro
-  scripts/importar.py steam RUTA        export de datos de Steam (.zip o carpeta)
-  scripts/importar.py spotify           lo mas escuchado, por OAuth
-  scripts/importar.py spotify-export RUTA   lo mismo desde el zip, sin app
+  letterboxd-rss USUARIO   peliculas: el diario publico del perfil
+  letterboxd RUTA          peliculas: el export CSV, si tienes cuenta Pro
+  steam RUTA               juegos: el export de datos de Steam
+  listenbrainz USUARIO     discos: lo mas escuchado, sin clave ninguna
+  spotify-export RUTA      discos: lo mismo desde el zip de Spotify
+
+Ninguna de estas vias pide pagar ni registrar una aplicacion. Se antepone el
+nombre del script: scripts/importar.py letterboxd-rss tu_usuario
 
 Por defecto va en modo rapido: solo entra lo que da senal de haberte importado
 (8 horas jugadas en Steam, 4 estrellas en Letterboxd). Con --completo entra
@@ -22,17 +25,11 @@ para recoger solo lo nuevo. Despues conviene pasar scripts/portadas.py.
 """
 
 import argparse
-import base64
 import csv
-import hashlib
-import http.server
 import io
 import json
 import re
-import secrets
 import sys
-import urllib.parse
-import webbrowser
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
@@ -229,136 +226,49 @@ def importar_steam(args):
     return volcar(juegos, "juegos", "juego", args)
 
 
-# --- Spotify -----------------------------------------------------------------
+# --- ListenBrainz ------------------------------------------------------------
 
-CLIENTE_SPOTIFY = Path.home() / ".config" / "mediateca" / "spotify-client-id"
-REDIRECCION = "http://127.0.0.1:8888/callback"
-PERMISOS = "user-top-read user-library-read"
-
-# Las tres ventanas que ofrece Spotify para lo mas escuchado.
-VENTANAS = {"corto": ("short_term", "últimas cuatro semanas"),
-            "medio": ("medium_term", "últimos seis meses"),
-            "largo": ("long_term", "de un año")}
+# Las ventanas que admite su API de estadisticas.
+RANGOS = {"mes": ("month", "del último mes"),
+          "trimestre": ("quarter", "del último trimestre"),
+          "semestre": ("half_yearly", "del último medio año"),
+          "año": ("year", "del último año"),
+          "todo": ("all_time", "de siempre")}
 
 
-def codigo_de_autorizacion(client_id, verificador):
-    """Abre el navegador y recoge el codigo que Spotify devuelve al volver."""
-    reto = base64.urlsafe_b64encode(
-        hashlib.sha256(verificador.encode()).digest()).decode().rstrip("=")
-    estado = secrets.token_urlsafe(16)
-    url = "https://accounts.spotify.com/authorize?" + urllib.parse.urlencode({
-        "client_id": client_id, "response_type": "code",
-        "redirect_uri": REDIRECCION, "scope": PERMISOS,
-        "code_challenge_method": "S256", "code_challenge": reto, "state": estado})
+def importar_listenbrainz(args):
+    """Los discos mas escuchados, de MusicBrainz y sin clave ninguna.
 
-    recogido = {}
-
-    class Recoge(http.server.BaseHTTPRequestHandler):
-        def do_GET(self):
-            recogido.update(urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query))
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.end_headers()
-            self.wfile.write("<h1>Listo</h1><p>Ya puedes cerrar esta pestaña.</p>"
-                             .encode("utf-8"))
-
-        def log_message(self, *_):
-            pass
-
-    print("Abriendo el navegador para que autorices la lectura de tu biblioteca.")
-    print(f"Si no se abre solo: {url}\n")
-    webbrowser.open(url)
-    with http.server.HTTPServer(("127.0.0.1", 8888), Recoge) as servidor:
-        servidor.handle_request()
-
-    if recogido.get("state", [None])[0] != estado:
-        print("El estado devuelto no coincide con el enviado. Abortado.")
-        return None
-    return recogido.get("code", [None])[0]
-
-
-def importar_spotify(args):
-    client_id = args.client_id or (CLIENTE_SPOTIFY.read_text().strip()
-                                   if CLIENTE_SPOTIFY.exists() else None)
-    if not client_id:
-        print("Falta el client id de tu app de Spotify:\n"
-              "  1. https://developer.spotify.com/dashboard, Create app.\n"
-              f"  2. Redirect URI: {REDIRECCION}\n"
-              "  3. mkdir -p ~/.config/mediateca && "
-              f"echo TU_CLIENT_ID > {CLIENTE_SPOTIFY}\n"
-              "No hace falta el client secret: se usa PKCE.")
-        return 1
-
-    verificador = secrets.token_urlsafe(64)
-    codigo = codigo_de_autorizacion(client_id, verificador)
-    if not codigo:
-        print("No he recibido el código de autorización.")
-        return 1
-
-    token = pedir("https://accounts.spotify.com/api/token",
-                  headers={"Content-Type": "application/x-www-form-urlencoded"},
-                  datos=urllib.parse.urlencode({
-                      "grant_type": "authorization_code", "code": codigo,
-                      "redirect_uri": REDIRECCION, "client_id": client_id,
-                      "code_verifier": verificador}).encode())
-    if not token or "access_token" not in token:
-        print("Spotify no ha dado el token. Revisa que el Redirect URI de la app\n"
-              f"sea exactamente {REDIRECCION}")
-        return 1
-
-    cabecera = {"Authorization": "Bearer " + token["access_token"]}
-    if args.completo:
-        discos = albumes_guardados(cabecera)
-        print(f"Spotify ha devuelto {len(discos)} álbumes guardados.")
-    else:
-        discos = albumes_mas_escuchados(cabecera, args.periodo, args.top)
-        print(f"{len(discos)} discos entre lo más escuchado ({VENTANAS[args.periodo][1]}).")
-    return volcar(discos, "musica", "album", args, cribar=False)
-
-
-def ficha_de_album(album):
-    return {"autor": ", ".join(a["name"] for a in album.get("artists", [])),
-            "year": (album.get("release_date") or "")[:4] or None,
-            "estado": "terminado"}
-
-
-def albumes_guardados(cabecera):
-    discos = {}
-    url = "https://api.spotify.com/v1/me/albums?limit=50"
-    while url:
-        pagina = pedir(url, headers=cabecera)
-        if not pagina:
-            break
-        for elemento in pagina.get("items", []):
-            album = elemento.get("album", {})
-            if album.get("name"):
-                discos[album["name"]] = ficha_de_album(album)
-        url = pagina.get("next")
-    return discos
-
-
-def albumes_mas_escuchados(cabecera, periodo, cuantos):
-    """Spotify da las canciones mas escuchadas, no los discos: se agregan.
-
-    Un disco con cinco canciones en tu top pesa mas que uno con una suelta,
-    que es justo el orden que interesa.
+    ListenBrainz es el registro de escuchas de MusicBrainz, la misma gente del
+    Cover Art Archive de donde salen las caratulas. Su API de estadisticas se
+    lee sin registrarse y ademas devuelve el mbid del disco, asi que la portada
+    se baja luego exacta en vez de por busqueda de texto.
     """
-    ventana = VENTANAS[periodo][0]
-    peso, fichas = {}, {}
-    for desplazamiento in (0, 50):
-        pagina = pedir("https://api.spotify.com/v1/me/top/tracks"
-                       f"?limit=50&offset={desplazamiento}&time_range={ventana}",
-                       headers=cabecera)
-        for puesto, cancion in enumerate((pagina or {}).get("items", [])):
-            album = cancion.get("album", {})
-            titulo = album.get("name")
-            if not titulo:
-                continue
-            # Cuanto mas arriba esta la cancion, mas suma su disco.
-            peso[titulo] = peso.get(titulo, 0) + (100 - desplazamiento - puesto)
-            fichas.setdefault(titulo, ficha_de_album(album))
-    mejores = sorted(peso, key=peso.get, reverse=True)[:cuantos]
-    return {titulo: fichas[titulo] for titulo in mejores}
+    usuario = args.usuario.strip().strip("/").split("/")[-1]
+    rango, cuando = RANGOS[args.periodo]
+    datos = pedir(f"https://api.listenbrainz.org/1/stats/user/{usuario}/releases"
+                  f"?count={args.top}&range={rango}")
+    if datos is None:
+        print(f"No he podido leer las estadísticas de '{usuario}'. Comprueba el\n"
+              "nombre de usuario en listenbrainz.org.")
+        return 1
+
+    lanzamientos = (datos.get("payload") or {}).get("releases") or []
+    if not lanzamientos:
+        print(f"'{usuario}' no tiene escuchas registradas en esa ventana.\n"
+              "Si acabas de crear la cuenta, conecta Spotify o sube tu historial\n"
+              "ampliado en listenbrainz.org/settings/import y vuelve luego.")
+        return 1
+
+    discos = {}
+    for disco in lanzamientos:
+        titulo = disco.get("release_name")
+        if not titulo:
+            continue
+        discos[titulo] = {"autor": disco.get("artist_name"), "estado": "terminado",
+                          "mbid": disco.get("caa_release_mbid") or disco.get("release_mbid")}
+    print(f"{plural(len(discos), 'disco', 'discos')} entre lo más escuchado {cuando}.")
+    return volcar(discos, "musica", "album", args, cribar=False)
 
 
 # --- Spotify, por export -----------------------------------------------------
@@ -492,6 +402,10 @@ def volcar(elementos, carpeta, tipo, args, cribar=True):
                   "favorito": False, "portada": None, "tags": None}
         if dato.get("horas"):
             campos["horas"] = dato["horas"]
+        if dato.get("mbid"):
+            # El identificador del disco en MusicBrainz: con el, la portada se
+            # baja exacta y no por parecido de nombre.
+            campos["mbid"] = dato["mbid"]
         if args.dry_run:
             nuevas += 1
             continue
@@ -547,12 +461,12 @@ def main():
     st.add_argument("ruta", help="el .zip del export o la carpeta")
     st.set_defaults(func=importar_steam)
 
-    sp = subs.add_parser("spotify", help="por OAuth: lo más escuchado, o lo guardado")
-    sp.add_argument("--client-id", help=f"por defecto, {CLIENTE_SPOTIFY}")
-    sp.add_argument("--periodo", choices=list(VENTANAS), default="medio",
-                    help="ventana de lo más escuchado (por defecto, medio)")
-    sp.add_argument("--top", type=int, default=40, help="cuántos discos (por defecto 40)")
-    sp.set_defaults(func=importar_spotify)
+    lb = subs.add_parser("listenbrainz", help="lo más escuchado, sin clave ninguna")
+    lb.add_argument("usuario", help="tu nombre de usuario en listenbrainz.org")
+    lb.add_argument("--periodo", choices=list(RANGOS), default="año",
+                    help="ventana (por defecto, año)")
+    lb.add_argument("--top", type=int, default=40, help="cuántos discos (por defecto 40)")
+    lb.set_defaults(func=importar_listenbrainz)
 
     se = subs.add_parser("spotify-export", help="lo mismo desde el zip, sin crear app")
     se.add_argument("ruta", help="el .zip del export de Spotify o la carpeta")

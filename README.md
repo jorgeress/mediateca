@@ -160,7 +160,7 @@ para recoger solo lo nuevo, y avisa cuando algo se parece a lo que ya tienes
 scripts/importar.py letterboxd-rss TU_USUARIO  # sin cuenta de pago
 scripts/importar.py letterboxd ~/Descargas/letterboxd-export.zip  # con Pro
 scripts/importar.py steam ~/Descargas/steam-export.zip
-scripts/importar.py spotify                    # lo más escuchado, por la API
+scripts/importar.py listenbrainz TU_USUARIO     # discos más escuchados
 scripts/importar.py spotify-export ~/Descargas/spotify.zip   # o desde el zip
 scripts/importar.py --dry-run letterboxd ...   # dice qué haría, sin escribir
 ```
@@ -183,28 +183,28 @@ Cada fuente da lo suyo, y ninguna lo da todo:
 | --- | --- | --- |
 | Letterboxd | El RSS del perfil, o el export si tienes Pro | Título, año y **tu puntuación**, que pasa de estrellas a la escala de 1 a 10. La *watchlist* entra como `pendiente`. |
 | Steam | `Ayuda` → `Datos personales` → descargar | Título y horas jugadas, en el campo `horas`. |
-| Spotify | Una app propia en su *dashboard*, o el zip del export | Los discos más escuchados, con artista y año. Con `--completo`, los guardados. |
+| ListenBrainz | Tu nombre de usuario | Los discos más escuchados, con artista y el *mbid* de MusicBrainz. |
+| Spotify | El zip del export | Lo mismo, desde tu historial. Con `--completo`, los álbumes guardados. |
 
 Letterboxd es la única de las tres que sabe si algo te gustó. Steam sabe cuánto
 jugaste, que no es lo mismo (por eso lo jugado entra como `en curso` y no como
 `terminado`: eso no lo puede deducir nadie), y Spotify solo sabe que le diste a
 guardar. De ahí que el volcado sea un punto de partida y no el resultado.
 
-Para Spotify hace falta un *client id*, que no es un secreto y no se guarda en
-el repositorio: se crea una app en
-[developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) con
-`http://127.0.0.1:8888/callback` como *Redirect URI* y se deja el id en
-`~/.config/mediateca/spotify-client-id`. No hace falta el *client secret*: la
-autorización va por PKCE, y el permiso que pide es solo de lectura de tu
-biblioteca.
+[ListenBrainz](https://listenbrainz.org) es el registro de escuchas de
+MusicBrainz, la misma gente del Cover Art Archive de donde salen las carátulas,
+y su API de estadísticas se lee sin registrar nada. Además devuelve el *mbid*
+del disco, así que la carátula se baja exacta y no por parecido de nombre. Para
+que tenga tus escuchas, se conecta Spotify en sus ajustes o se le sube el
+historial ampliado cuando llegue.
 
 Después de importar, `scripts/portadas.py` le pone carátula a todo lo nuevo.
 
-Se puede montar entero **sin pagar nada**: export de Steam, export de Spotify y
-el RSS de Letterboxd. Las dos vías rápidas sí son de pago, y conviene saberlo
-antes: el export CSV de Letterboxd pide Pro, y la API de Spotify pide Premium
-desde febrero de 2026. Lo que da y lo que no da cada fuente, los dos exports
-distintos de Spotify y qué herramientas de otros hacen ya parte de esto está en
+**Nada de esto pide pagar, ni registrar una aplicación, ni una clave de API.**
+Fue una decisión, no una casualidad: el export CSV de Letterboxd está detrás de
+su cuenta Pro y la API de Spotify pide Premium desde febrero de 2026, así que
+las dos se cambiaron por vías abiertas. Lo que da y lo que no da cada fuente, y
+qué herramientas de otros hacen ya parte de esto, está en
 [`docs/importar.md`](docs/importar.md).
 
 ## Portadas

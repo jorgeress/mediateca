@@ -96,6 +96,12 @@ def portada_libro(titulo, campos):
 
 
 def portada_album(titulo, campos):
+    if campos.get("mbid"):
+        # Viene de ListenBrainz: el disco ya esta identificado, no hay que buscarlo.
+        img = pedir(f"https://coverartarchive.org/release/{campos['mbid']}/front-500",
+                    binario=True)
+        if img and len(img) > 5000:
+            return img, "Cover Art Archive (exacta, por mbid)"
     consulta = f'releasegroup:"{titulo}"'
     if campos.get("autor"):
         consulta += f' AND artist:"{campos["autor"]}"'

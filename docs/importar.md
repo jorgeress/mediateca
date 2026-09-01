@@ -29,20 +29,27 @@ importa el cine, usa uno de esos.
 
 ## ¿Hace falta pagar?
 
-En dos de las tres, según por dónde entres. Comprobado en septiembre de 2026:
+**No.** Ninguna de las vías que usa esto pide pagar, ni registrar una
+aplicación, ni pedir una clave de API. Comprobado en septiembre de 2026:
 
-| Vía | ¿Cuenta de pago? |
-| --- | --- |
-| Steam, export de datos | No. Steam no tiene planes de pago para esto. |
-| Spotify, export de datos | No. Es tu derecho de acceso a tus datos, va con cuenta gratuita. |
-| Spotify, API | **Sí, Premium**, desde el 11 de febrero de 2026. |
-| Letterboxd, export CSV | **Sí, Pro** (35 $ al año, 19 $ en oferta). |
-| Letterboxd, RSS del perfil | No. |
+| Sección | Vía | Qué hace falta |
+| --- | --- | --- |
+| Películas | RSS del perfil de Letterboxd | tu nombre de usuario |
+| Juegos | Export de datos de Steam | tu cuenta, y esperar unos días |
+| Discos | API de estadísticas de ListenBrainz | tu nombre de usuario |
+| Discos | Export de datos de Spotify | tu cuenta, y esperar |
 
-O sea que **se puede montar entero sin pagar nada**: export de Steam, export de
-Spotify y el RSS de Letterboxd. Lo que se pierde por el camino es historial
-(el RSS da las últimas cien entradas, no la vida entera) y tiempo de espera
-(el historial ampliado de Spotify tarda hasta un mes, la API es instantánea).
+Se descartaron por el camino dos vías que sí cuestan dinero, y conviene saber
+por qué para no volver a proponerlas:
+
+- **El export CSV de Letterboxd** está detrás de su cuenta Pro (35 $ al año).
+  Importar es gratis para todo el mundo; exportar, no. El RSS del perfil da el
+  mismo dato con menos historial. El lector de CSV sigue aquí porque leer un
+  fichero no cuesta nada, pero la vía documentada es el RSS.
+- **La API de Spotify** pide Premium desde el 11 de febrero de 2026: el dueño
+  de la app tiene que tenerlo, solo se permite un Client ID por desarrollador y
+  hay un tope de cinco usuarios autorizados por app. Ese tope, además, impide
+  compartir una app con nadie. Estaba implementada y se ha quitado entera.
 
 ## Qué da cada fuente y qué no
 
@@ -113,23 +120,26 @@ ninguno de los dos es lo que uno espera:
   este sí trae el álbum de cada reproducción. La pega es que tarda **hasta 30
   días** en llegar.
 
-La tercera vía es la API (`me/top/tracks`), que da lo más escuchado al momento
-en tres ventanas: cuatro semanas, seis meses y alrededor de un año. La app no
-pide datos personales y no lleva secreto (la autorización va por PKCE y el
-permiso es de solo lectura), pero desde el **11 de febrero de 2026** Spotify
-endureció el modo desarrollo: **el dueño de la app tiene que tener Premium**,
-solo se permite un Client ID por desarrollador y un máximo de **cinco usuarios
-autorizados por app**.
+La vía rápida y gratis es **ListenBrainz**, que es el registro de escuchas de
+MusicBrainz, la misma gente del Cover Art Archive de donde ya salen las
+carátulas. Su API de estadísticas **se lee sin registrar nada ni pedir clave**:
 
-Ese tope de cinco es lo que impide compartir la app: cada persona que replique
-esto necesitaría crear la suya, y con Premium. Por eso el lector del export
-existe y no es un extra: para quien no pague, es la única vía.
+```bash
+scripts/importar.py listenbrainz TU_USUARIO
+scripts/importar.py listenbrainz TU_USUARIO --periodo todo --top 60
+```
 
-El mismo cambio se llevó por delante una parte de la API. `me/top/tracks` sigue
-en pie, que es lo que usa el modo rápido, pero los endpoints de biblioteca se
-unificaron y `GET /me/albums` (lo que usa `--completo`) puede haber cambiado de
-forma. Su página de referencia sigue publicada sin aviso de retirada, así que
-está por ver: se confirma la primera vez que corramos el OAuth de verdad.
+Ventanas: `mes`, `trimestre`, `semestre`, `año` (la de por defecto) y `todo`.
+
+Y trae algo que no da ninguna otra fuente: el **mbid** del disco, o sea su
+identificador en MusicBrainz. Con él, `scripts/portadas.py` se baja la carátula
+exacta de esa edición en vez de buscarla por parecido de nombre. Queda guardado
+en la ficha, así que la portada se puede rehacer siempre igual.
+
+Para que ListenBrainz tenga tus escuchas hay dos caminos, los dos gratis: conectar
+Spotify en sus ajustes, que empieza a registrar desde ese momento, o subir el
+historial ampliado en `listenbrainz.org/settings/import` cuando te llegue. Si
+acabas de crear la cuenta y aún no hay nada, el script te lo dice.
 
 Están implementadas las dos, porque no todo el mundo quiere crear una app:
 
@@ -170,11 +180,11 @@ primera vez: solo entra lo que da alguna señal de haberte importado.
 | --- | --- | --- |
 | Steam | 8 horas jugadas o más | `--min-horas` |
 | Letterboxd (export y RSS) | 4 estrellas o más | `--min-nota` |
-| Spotify | los 40 discos más escuchados | `--top`, `--periodo` |
+| ListenBrainz y Spotify | los 40 discos más escuchados | `--top`, `--periodo` |
 
-Spotify no pasa por umbral porque ya se selecciona sola: coger el top 40 *es* la
-criba. En su caso `--completo` no quita el umbral, sino que cambia de pregunta,
-de lo más escuchado a lo que tienes guardado.
+Los discos no pasan por umbral porque ya se seleccionan solos: coger el top 40
+*es* la criba. En el export de Spotify, `--completo` no quita el umbral sino que
+cambia de pregunta, de lo más escuchado a lo que tienes guardado.
 
 Lo que se queda fuera se cuenta por pantalla, no desaparece en silencio. Con
 `--completo` entra todo lo que traiga el export, sin umbrales.
@@ -199,8 +209,8 @@ scripts/importar.py --dry-run ...                               # sin escribir
    lo hace ninguna herramienta.
 5. **Cuando lleguen los exports**, repite el paso 2 con Steam y Spotify. El
    importador no pisa nada de lo que ya haya, así que se puede repetir siempre.
-   Si prefieres no esperar a Spotify, `scripts/importar.py spotify` lo saca por
-   la API en el momento.
+   Si tienes cuenta en ListenBrainz con escuchas, los discos salen en el
+   momento y no hace falta esperar a Spotify.
 6. **Más adelante**, si quieres el archivo completo y no solo lo destacado,
    `--completo`. Los libros, a mano.
 
