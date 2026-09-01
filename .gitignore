@@ -14,3 +14,6 @@ content/.obsidian/workspace.json
 content/.obsidian/workspace-mobile.json
 content/.obsidian/cache
 content/.trash/
+
+# Obsidian abierto por error sobre la raiz del repo: la vault es content/
+/.obsidian/

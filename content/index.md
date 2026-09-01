@@ -23,3 +23,5 @@ Cada ficha es un fichero Markdown con unos pocos campos en la cabecera (`tipo`,
 mano: son *Bases* de Obsidian que filtran y ordenan esos campos, así que se
 actualizan solas en cuanto añado una ficha. El sitio se genera con Quartz y se
 publica desde GitHub.
+
+Las carátulas vienen de fuentes públicas; están reconocidas en [[creditos|Créditos]].
