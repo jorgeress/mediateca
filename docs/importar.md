@@ -27,6 +27,23 @@ una línea. Lo que no encontré es nada que junte juegos, cine y música en una
 sola vault con fichas tuyas, que es de lo que va esto. Si algún día solo te
 importa el cine, usa uno de esos.
 
+## ¿Hace falta pagar?
+
+En dos de las tres, según por dónde entres. Comprobado en septiembre de 2026:
+
+| Vía | ¿Cuenta de pago? |
+| --- | --- |
+| Steam, export de datos | No. Steam no tiene planes de pago para esto. |
+| Spotify, export de datos | No. Es tu derecho de acceso a tus datos, va con cuenta gratuita. |
+| Spotify, API | **Sí, Premium**, desde el 11 de febrero de 2026. |
+| Letterboxd, export CSV | **Sí, Pro** (35 $ al año, 19 $ en oferta). |
+| Letterboxd, RSS del perfil | No. |
+
+O sea que **se puede montar entero sin pagar nada**: export de Steam, export de
+Spotify y el RSS de Letterboxd. Lo que se pierde por el camino es historial
+(el RSS da las últimas cien entradas, no la vida entera) y tiempo de espera
+(el historial ampliado de Spotify tarda hasta un mes, la API es instantánea).
+
 ## Qué da cada fuente y qué no
 
 | | Películas (Letterboxd) | Juegos (Steam) | Música (Spotify) |
@@ -53,14 +70,15 @@ El export está en `Settings` → `Import & Export` → `Export your data`, y tr
 que importa es `ratings.csv`: `Date,Name,Year,Letterboxd URI,Rating`, con la
 puntuación de 0,5 a 5 estrellas, que aquí se dobla para la escala de 1 a 10.
 
-Hay fuentes de terceros que dicen que exportar exige cuenta Pro. No he podido
-confirmarlo (Letterboxd devuelve 403 a cualquier consulta automática), así que
-míralo en tus ajustes, que se ve en diez segundos.
+Ese export **es de pago**: está detrás de Letterboxd Pro. Importar es gratis
+para todo el mundo, exportar no.
 
-Si resulta que lo pide, queda una vía gratis: el RSS público de tu perfil,
-`letterboxd.com/TU_USUARIO/rss/`. Lo he probado y devuelve las últimas ~100
-entradas del diario con título, año, **tu nota** y la fecha. Es menos historial,
-pero es exactamente el mismo dato.
+La vía gratis es el RSS público del perfil, que da las últimas ~100 entradas del
+diario con título, año, **tu nota** y la fecha. Menos historial, mismo dato:
+
+```bash
+scripts/importar.py letterboxd-rss TU_USUARIO
+```
 
 Lo que **no** se puede: sacar el director. No está en el export ni en el RSS.
 
@@ -96,9 +114,22 @@ ninguno de los dos es lo que uno espera:
   días** en llegar.
 
 La tercera vía es la API (`me/top/tracks`), que da lo más escuchado al momento
-en tres ventanas: cuatro semanas, seis meses y varios años. Necesita crear una
-app propia, que no pide datos personales y no lleva secreto: la autorización va
-por PKCE y el permiso es de solo lectura.
+en tres ventanas: cuatro semanas, seis meses y alrededor de un año. La app no
+pide datos personales y no lleva secreto (la autorización va por PKCE y el
+permiso es de solo lectura), pero desde el **11 de febrero de 2026** Spotify
+endureció el modo desarrollo: **el dueño de la app tiene que tener Premium**,
+solo se permite un Client ID por desarrollador y un máximo de **cinco usuarios
+autorizados por app**.
+
+Ese tope de cinco es lo que impide compartir la app: cada persona que replique
+esto necesitaría crear la suya, y con Premium. Por eso el lector del export
+existe y no es un extra: para quien no pague, es la única vía.
+
+El mismo cambio se llevó por delante una parte de la API. `me/top/tracks` sigue
+en pie, que es lo que usa el modo rápido, pero los endpoints de biblioteca se
+unificaron y `GET /me/albums` (lo que usa `--completo`) puede haber cambiado de
+forma. Su página de referencia sigue publicada sin aviso de retirada, así que
+está por ver: se confirma la primera vez que corramos el OAuth de verdad.
 
 Están implementadas las dos, porque no todo el mundo quiere crear una app:
 
@@ -138,7 +169,7 @@ primera vez: solo entra lo que da alguna señal de haberte importado.
 | Fuente | Criterio del modo rápido | Se mueve con |
 | --- | --- | --- |
 | Steam | 8 horas jugadas o más | `--min-horas` |
-| Letterboxd | 4 estrellas o más | `--min-nota` |
+| Letterboxd (export y RSS) | 4 estrellas o más | `--min-nota` |
 | Spotify | los 40 discos más escuchados | `--top`, `--periodo` |
 
 Spotify no pasa por umbral porque ya se selecciona sola: coger el top 40 *es* la
@@ -159,8 +190,8 @@ scripts/importar.py --dry-run ...                               # sin escribir
 
 1. **Hoy, lo que tarda**: pide el export de Steam y el de Spotify. Uno tarda
    días y el otro hasta un mes, así que cuanto antes se pidan, mejor.
-2. **Hoy, lo que no tarda**: exporta Letterboxd (o tira del RSS) e importa en
-   modo rápido. Ya tienes las películas que te gustaron, con su nota puesta.
+2. **Hoy, lo que no tarda**: `letterboxd-rss TU_USUARIO`, o el export si eres
+   Pro. Ya tienes las películas que te gustaron, con su nota puesta.
 3. **`scripts/portadas.py`**, que le pone carátula a todo lo nuevo de una
    pasada.
 4. **Asciende a mano** lo que merezca estar: quitar la línea `draft`, poner la

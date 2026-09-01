@@ -157,7 +157,8 @@ para recoger solo lo nuevo, y avisa cuando algo se parece a lo que ya tienes
 (el *Witcher 3* de Steam se llama *The Witcher 3: Wild Hunt*, y esa la unes tú).
 
 ```bash
-scripts/importar.py letterboxd ~/Descargas/letterboxd-export.zip
+scripts/importar.py letterboxd-rss TU_USUARIO  # sin cuenta de pago
+scripts/importar.py letterboxd ~/Descargas/letterboxd-export.zip  # con Pro
 scripts/importar.py steam ~/Descargas/steam-export.zip
 scripts/importar.py spotify                    # lo más escuchado, por la API
 scripts/importar.py spotify-export ~/Descargas/spotify.zip   # o desde el zip
@@ -180,7 +181,7 @@ Cada fuente da lo suyo, y ninguna lo da todo:
 
 | Fuente | Cómo | Qué trae |
 | --- | --- | --- |
-| Letterboxd | `Settings` → `Import & Export` → `Export your data` | Título, año y **tu puntuación**, que pasa de estrellas a la escala de 1 a 10. La *watchlist* entra como `pendiente`. |
+| Letterboxd | El RSS del perfil, o el export si tienes Pro | Título, año y **tu puntuación**, que pasa de estrellas a la escala de 1 a 10. La *watchlist* entra como `pendiente`. |
 | Steam | `Ayuda` → `Datos personales` → descargar | Título y horas jugadas, en el campo `horas`. |
 | Spotify | Una app propia en su *dashboard*, o el zip del export | Los discos más escuchados, con artista y año. Con `--completo`, los guardados. |
 
@@ -199,8 +200,11 @@ biblioteca.
 
 Después de importar, `scripts/portadas.py` le pone carátula a todo lo nuevo.
 
-Lo que da y lo que no da cada fuente, los dos exports distintos de Spotify, y
-qué herramientas de otros hacen ya parte de esto, está en
+Se puede montar entero **sin pagar nada**: export de Steam, export de Spotify y
+el RSS de Letterboxd. Las dos vías rápidas sí son de pago, y conviene saberlo
+antes: el export CSV de Letterboxd pide Pro, y la API de Spotify pide Premium
+desde febrero de 2026. Lo que da y lo que no da cada fuente, los dos exports
+distintos de Spotify y qué herramientas de otros hacen ya parte de esto está en
 [`docs/importar.md`](docs/importar.md).
 
 ## Portadas

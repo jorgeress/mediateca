@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Crea fichas en la vault a partir de lo que ya tienes en otros sitios.
 
-  scripts/importar.py letterboxd RUTA   export de Letterboxd (.zip, carpeta o csv)
+  scripts/importar.py letterboxd RUTA       export de Letterboxd (necesita Pro)
+  scripts/importar.py letterboxd-rss USUARIO   su diario publico, sin Pro
   scripts/importar.py steam RUTA        export de datos de Steam (.zip o carpeta)
   scripts/importar.py spotify           lo mas escuchado, por OAuth
   scripts/importar.py spotify-export RUTA   lo mismo desde el zip, sin app
@@ -34,6 +35,7 @@ import urllib.parse
 import webbrowser
 import zipfile
 from pathlib import Path
+from xml.etree import ElementTree
 
 from mediateca import VAULT, nombre_de_fichero, normal, pedir
 
@@ -138,6 +140,40 @@ def importar_letterboxd(args):
     return volcar(pelis, "pelis", "peli", args)
 
 
+def importar_letterboxd_rss(args):
+    """El diario publico del perfil, que no pide cuenta de pago.
+
+    Da menos historial que el export (las ultimas cien entradas mas o menos)
+    pero exactamente el mismo dato: titulo, año y tu puntuacion.
+    """
+    usuario = args.usuario.strip().strip("/").split("/")[-1]
+    crudo = pedir(f"https://letterboxd.com/{usuario}/rss/", binario=True)
+    if not crudo:
+        print(f"No he podido leer el diario de '{usuario}'. Comprueba el nombre y\n"
+              "que el perfil no sea privado.")
+        return 1
+
+    espacio = {"letterboxd": "https://letterboxd.com"}
+    pelis = {}
+    for entrada in ElementTree.fromstring(crudo).iter("item"):
+        titulo = entrada.findtext("letterboxd:filmTitle", namespaces=espacio)
+        if not titulo:
+            continue  # las listas y las reseñas sueltas no traen pelicula
+        nota = entrada.findtext("letterboxd:memberRating", namespaces=espacio)
+        año = entrada.findtext("letterboxd:filmYear", namespaces=espacio)
+        pelis[titulo] = {
+            "year": año,
+            "estado": "terminado",
+            "nota": int(round(float(nota) * 2)) if nota else None,
+        }
+
+    if not pelis:
+        print("El diario no tiene entradas de películas.")
+        return 1
+    print(f"Diario de {usuario}: {len(pelis)} películas.")
+    return volcar(pelis, "pelis", "peli", args)
+
+
 # --- Steam -------------------------------------------------------------------
 
 def buscar_juegos(dato, hallados):
@@ -202,7 +238,7 @@ PERMISOS = "user-top-read user-library-read"
 # Las tres ventanas que ofrece Spotify para lo mas escuchado.
 VENTANAS = {"corto": ("short_term", "últimas cuatro semanas"),
             "medio": ("medium_term", "últimos seis meses"),
-            "largo": ("long_term", "de varios años")}
+            "largo": ("long_term", "de un año")}
 
 
 def codigo_de_autorizacion(client_id, verificador):
@@ -502,6 +538,10 @@ def main():
     lb = subs.add_parser("letterboxd", help="export de Letterboxd")
     lb.add_argument("ruta", help="el .zip del export, la carpeta o un csv suelto")
     lb.set_defaults(func=importar_letterboxd)
+
+    lr = subs.add_parser("letterboxd-rss", help="el diario público, sin cuenta Pro")
+    lr.add_argument("usuario", help="tu nombre de usuario en Letterboxd")
+    lr.set_defaults(func=importar_letterboxd_rss)
 
     st = subs.add_parser("steam", help="export de datos de Steam")
     st.add_argument("ruta", help="el .zip del export o la carpeta")
