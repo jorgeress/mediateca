@@ -177,46 +177,32 @@ scripts/portadas.py --force         # rehace también las que ya la tienen
 scripts/portadas.py --dry-run       # dice qué haría, sin tocar nada
 ```
 
-Cada sección tira de la fuente que mejor la conoce, y ninguna pide registrarse:
+Cada sección tira de la fuente que mejor la conoce, y **ninguna pide clave ni
+registro**. Se clona el repositorio y funciona:
 
-| Sección | Fuente | Clave |
-| --- | --- | --- |
-| Juegos | Steam | no |
-| Libros | Open Library | no |
-| Música | MusicBrainz + Cover Art Archive | no |
-| Películas | Wikipedia, o TMDB si hay clave | opcional |
+| Sección | Fuente |
+| --- | --- |
+| Juegos | Steam |
+| Libros | Open Library |
+| Música | MusicBrainz + Cover Art Archive |
+| Películas | Wikipedia |
 
-Las películas son el caso raro. Para libros y discos existen catálogos abiertos
-(Open Library es del Internet Archive, Cover Art Archive es de MusicBrainz) y
-los juegos los sirve la propia tienda, pero para cine no hay nada equivalente:
-todas las bases de datos de películas con imágenes decentes piden una clave, y
-las que no la piden acaban sacando los pósters de TMDB por detrás.
+Las películas fueron el caso difícil. Para libros y discos existen catálogos
+abiertos (Open Library es del Internet Archive, Cover Art Archive es de
+MusicBrainz) y los juegos los sirve la propia tienda, pero para cine no hay
+nada equivalente: las bases de datos de películas piden una clave detrás de un
+formulario que quiere nombre, teléfono y dirección postal, y los servicios que
+no la piden son CDN internos de aplicaciones de terceros, sin términos ni
+garantía de seguir ahí mañana.
 
-Así que la vía por defecto es Wikipedia. El script busca la película en la
-Wikipedia en español, salta al artículo en inglés por los enlaces de idioma
-(la española no admite material con copyright, así que las carátulas solo
-viven en la inglesa) y se queda con la imagen de la ficha lateral. Sin clave,
-sin registro y con una fuente que no va a desaparecer. La pega es la
-resolución: Wikipedia obliga a que el material no libre esté en baja
-resolución, así que el póster sale a unos 220 px de ancho. Justo lo que mide
-la tarjeta, o sea que se ve bien en una pantalla normal y algo blando en una
-de mucha densidad. Y siempre es el cartel internacional, no el español.
-
-Si esa diferencia te importa, TMDB da 500 px y el cartel de la edición
-española. La clave es gratuita y de uso personal, pero su formulario pide
-nombre, teléfono y dirección postal, que para un catálogo de casa es bastante
-peaje. Si aun así la sacas, en
-[themoviedb.org/settings/api](https://www.themoviedb.org/settings/api):
-
-```bash
-mkdir -p ~/.config/mediateca && echo TU_CLAVE > ~/.config/mediateca/tmdb
-scripts/portadas.py --seccion pelis --force
-```
-
-El script la busca ahí o en la variable `TMDB_API_KEY`, y si la encuentra la
-prefiere a Wikipedia. Nunca se guarda en el repositorio. Si llegas a usarla, sus
-términos piden atribución: hay que añadirla a `content/creditos.md`, donde ahora
-solo está la de Wikipedia.
+La salida es Wikipedia. El script busca la película en la Wikipedia en español,
+salta al artículo en inglés por los enlaces de idioma (la española no admite
+material con copyright, así que las carátulas solo viven en la inglesa) y se
+queda con la imagen de la ficha lateral. La pega es la resolución: Wikipedia
+obliga a que el material no libre esté en baja resolución, así que el póster
+llega a unos 220 px de ancho. Es justo lo que mide la tarjeta, o sea que al
+lado de los demás no se nota, solo se queda algo blando en pantallas de mucha
+densidad. Y es el cartel internacional, no el de la edición española.
 
 Si una ficha no se encuentra (la búsqueda va por el nombre del fichero), lo más
 rápido es dejar la imagen a mano en `assets/portadas/` y escribir el enlace en
@@ -245,7 +231,6 @@ MIT. Se conserva su `LICENSE.txt`.
 El contenido de `content/` es mío, Copyright (c) 2026 jorgeress.
 
 Las carátulas son de sus respectivos autores y se usan en miniatura para
-identificar cada obra. Vienen de [TMDB](https://www.themoviedb.org),
-[Open Library](https://openlibrary.org),
-[Cover Art Archive](https://coverartarchive.org) y Steam. Este proyecto usa la
-API de TMDB pero no está avalado ni certificado por TMDB.
+identificar cada obra. Vienen de [Open Library](https://openlibrary.org),
+[Cover Art Archive](https://coverartarchive.org),
+[Wikipedia](https://en.wikipedia.org) y Steam.

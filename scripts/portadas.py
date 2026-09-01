@@ -6,8 +6,7 @@ Cada seccion tira de la fuente que mejor la conoce:
   juegos  Steam (busqueda publica, sin clave)
   libros  Open Library (sin clave)
   musica  MusicBrainz + Cover Art Archive (sin clave)
-  pelis   TMDB si hay clave (TMDB_API_KEY o ~/.config/mediateca/tmdb),
-          y si no Wikipedia, sin clave pero en baja resolucion
+  pelis   Wikipedia (sin clave)
 
 Uso:
   scripts/portadas.py                 rellena las fichas sin portada
@@ -19,7 +18,6 @@ Uso:
 
 import argparse
 import json
-import os
 import re
 import sys
 import time
@@ -161,28 +159,6 @@ def portada_album(titulo, campos):
     return None, None
 
 
-def clave_tmdb():
-    if os.environ.get("TMDB_API_KEY"):
-        return os.environ["TMDB_API_KEY"].strip()
-    fichero = Path.home() / ".config" / "mediateca" / "tmdb"
-    return fichero.read_text().strip() if fichero.exists() else None
-
-
-def portada_peli_tmdb(titulo, campos, clave):
-    params = {"api_key": clave, "query": titulo, "language": "es-ES"}
-    if campos.get("year"):
-        params["year"] = campos["year"]
-    datos = pedir("https://api.themoviedb.org/3/search/movie?"
-                  + urllib.parse.urlencode(params)) or {}
-    for peli in datos.get("results", []):
-        if not peli.get("poster_path"):
-            continue
-        img = pedir("https://image.tmdb.org/t/p/w500" + peli["poster_path"], binario=True)
-        if img and len(img) > 5000:
-            return img, f"TMDB ({peli.get('title')})"
-    return None, None
-
-
 def wiki(host, params):
     """Una llamada a la API de MediaWiki, sin apretar: devuelve 429 enseguida."""
     time.sleep(0.6)
@@ -219,7 +195,13 @@ def imagen_infobox(articulo):
     return re.sub(r"/thumb(/.*)/\d+px-[^/]+$", r"\1", src)
 
 
-def portada_peli_wikipedia(titulo, campos):
+def portada_peli(titulo, campos):
+    """El poster de la ficha lateral del articulo en ingles.
+
+    Wikipedia obliga a que el material no libre este en baja resolucion, asi
+    que sale a unos 220 px de ancho: justo lo que mide la tarjeta, nitido en
+    una pantalla normal y algo blando en una de mucha densidad.
+    """
     for articulo in articulos_ingleses(titulo, campos.get("year")):
         src = imagen_infobox(articulo)
         if not src:
@@ -228,21 +210,6 @@ def portada_peli_wikipedia(titulo, campos):
         if img and len(img) > 5000:
             return img, f"Wikipedia ({articulo})"
     return None, None
-
-
-def portada_peli(titulo, campos):
-    """TMDB si hay clave; si no, el poster del infobox de Wikipedia.
-
-    Wikipedia obliga a que el material no libre este en baja resolucion, asi
-    que sale a unos 220 px de ancho: justo lo que mide la tarjeta, nitido en
-    una pantalla normal y algo blando en una de mucha densidad.
-    """
-    clave = clave_tmdb()
-    if clave:
-        img, fuente = portada_peli_tmdb(titulo, campos, clave)
-        if img:
-            return img, fuente
-    return portada_peli_wikipedia(titulo, campos)
 
 
 FUENTES = {"juego": portada_juego, "peli": portada_peli,
@@ -270,7 +237,6 @@ def main():
     p.add_argument("--dry-run", action="store_true", help="no baja ni escribe nada")
     args = p.parse_args()
 
-    sin_tmdb = False
     hechas = fallidas = saltadas = 0
 
     for md in fichas(args):
@@ -291,8 +257,6 @@ def main():
             continue
 
         img, fuente = FUENTES[tipo](titulo, campos)
-        if fuente and fuente.startswith("Wikipedia"):
-            sin_tmdb = True
         if not img:
             print(f"  ✗  {etiqueta}: sin portada en la fuente")
             fallidas += 1
@@ -306,11 +270,6 @@ def main():
 
     print(f"\n{hechas} portadas nuevas, {fallidas} sin resolver, "
           f"{saltadas} ya la tenian.")
-    if sin_tmdb:
-        print("\nLos pósters salen de Wikipedia, en baja resolución porque es lo\n"
-              "único que permite alojar allí el material con copyright. Con una\n"
-              "clave de TMDB en ~/.config/mediateca/tmdb salen a 500 px y con el\n"
-              "cartel de la edición española.")
     return 0
 
 
