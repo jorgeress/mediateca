@@ -95,11 +95,32 @@ ninguno de los dos es lo que uno espera:
   este sí trae el álbum de cada reproducción. La pega es que tarda **hasta 30
   días** en llegar.
 
-La tercera vía es la API (`me/top/artists` y `me/top/tracks`), que da los más
-escuchados al momento en tres ventanas: cuatro semanas, seis meses y varios
-años. Los discos salen agregando los álbumes de las canciones. Necesita crear
-una app propia, que no pide datos personales y no lleva secreto: la
-autorización va por PKCE y el permiso es de solo lectura.
+La tercera vía es la API (`me/top/tracks`), que da lo más escuchado al momento
+en tres ventanas: cuatro semanas, seis meses y varios años. Necesita crear una
+app propia, que no pide datos personales y no lleva secreto: la autorización va
+por PKCE y el permiso es de solo lectura.
+
+Están implementadas las dos, porque no todo el mundo quiere crear una app:
+
+```bash
+scripts/importar.py spotify                      # API: lo más escuchado
+scripts/importar.py spotify --periodo largo      # ventana de varios años
+scripts/importar.py spotify --top 60             # cuántos discos
+scripts/importar.py --completo spotify           # API: lo guardado, sin ranking
+
+scripts/importar.py spotify-export ~/Descargas/spotify.zip              # el zip
+scripts/importar.py --completo spotify-export ~/Descargas/spotify.zip   # guardados
+```
+
+Spotify no ordena discos, solo canciones, así que **los discos se agregan**: un
+álbum con cinco canciones en tu top pesa más que uno con una suelta, y cuanto
+más arriba esté la canción, más suma. Desde el export es más limpio, porque ahí
+está el tiempo real escuchado de cada reproducción. En ese caso se descartan los
+discos con menos de veinte minutos en total, que no son "lo más escuchado" de
+nadie.
+
+Si le pasas el export de la cuenta (el de días, sin álbum), el script te lo dice
+en vez de fallar, y te queda `--completo` para meter lo guardado.
 
 Lo que **no** se puede en ningún caso: sacar una nota tuya. Spotify no tiene
 puntuaciones.
@@ -118,6 +139,11 @@ primera vez: solo entra lo que da alguna señal de haberte importado.
 | --- | --- | --- |
 | Steam | 8 horas jugadas o más | `--min-horas` |
 | Letterboxd | 4 estrellas o más | `--min-nota` |
+| Spotify | los 40 discos más escuchados | `--top`, `--periodo` |
+
+Spotify no pasa por umbral porque ya se selecciona sola: coger el top 40 *es* la
+criba. En su caso `--completo` no quita el umbral, sino que cambia de pregunta,
+de lo más escuchado a lo que tienes guardado.
 
 Lo que se queda fuera se cuenta por pantalla, no desaparece en silencio. Con
 `--completo` entra todo lo que traiga el export, sin umbrales.
@@ -142,6 +168,8 @@ scripts/importar.py --dry-run ...                               # sin escribir
    lo hace ninguna herramienta.
 5. **Cuando lleguen los exports**, repite el paso 2 con Steam y Spotify. El
    importador no pisa nada de lo que ya haya, así que se puede repetir siempre.
+   Si prefieres no esperar a Spotify, `scripts/importar.py spotify` lo saca por
+   la API en el momento.
 6. **Más adelante**, si quieres el archivo completo y no solo lo destacado,
    `--completo`. Los libros, a mano.
 

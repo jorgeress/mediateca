@@ -159,7 +159,8 @@ para recoger solo lo nuevo, y avisa cuando algo se parece a lo que ya tienes
 ```bash
 scripts/importar.py letterboxd ~/Descargas/letterboxd-export.zip
 scripts/importar.py steam ~/Descargas/steam-export.zip
-scripts/importar.py spotify
+scripts/importar.py spotify                    # lo más escuchado, por la API
+scripts/importar.py spotify-export ~/Descargas/spotify.zip   # o desde el zip
 scripts/importar.py --dry-run letterboxd ...   # dice qué haría, sin escribir
 ```
 
@@ -181,7 +182,7 @@ Cada fuente da lo suyo, y ninguna lo da todo:
 | --- | --- | --- |
 | Letterboxd | `Settings` → `Import & Export` → `Export your data` | Título, año y **tu puntuación**, que pasa de estrellas a la escala de 1 a 10. La *watchlist* entra como `pendiente`. |
 | Steam | `Ayuda` → `Datos personales` → descargar | Título y horas jugadas, en el campo `horas`. |
-| Spotify | Una app propia en su *dashboard*, autorizada una vez desde el navegador | Álbumes guardados, con artista y año. |
+| Spotify | Una app propia en su *dashboard*, o el zip del export | Los discos más escuchados, con artista y año. Con `--completo`, los guardados. |
 
 Letterboxd es la única de las tres que sabe si algo te gustó. Steam sabe cuánto
 jugaste, que no es lo mismo (por eso lo jugado entra como `en curso` y no como

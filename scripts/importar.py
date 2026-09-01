@@ -3,7 +3,8 @@
 
   scripts/importar.py letterboxd RUTA   export de Letterboxd (.zip, carpeta o csv)
   scripts/importar.py steam RUTA        export de datos de Steam (.zip o carpeta)
-  scripts/importar.py spotify           albumes guardados, por OAuth
+  scripts/importar.py spotify           lo mas escuchado, por OAuth
+  scripts/importar.py spotify-export RUTA   lo mismo desde el zip, sin app
 
 Por defecto va en modo rapido: solo entra lo que da senal de haberte importado
 (8 horas jugadas en Steam, 4 estrellas en Letterboxd). Con --completo entra
@@ -42,6 +43,11 @@ CAMPOS = ["tipo", "year", "autor", "nota", "estado", "favorito", "portada", "tag
 # Letterboxd, asi que el resto se criba por la unica senal que dan: el uso.
 MIN_HORAS = 8
 MIN_NOTA = 8  # cuatro estrellas de Letterboxd
+MIN_MS = 20 * 60 * 1000  # menos de veinte minutos no es "lo mas escuchado"
+
+
+def plural(n, singular, plural_):
+    return f"{n} {singular if n == 1 else plural_}"
 
 
 def yaml_valor(v):
@@ -191,6 +197,12 @@ def importar_steam(args):
 
 CLIENTE_SPOTIFY = Path.home() / ".config" / "mediateca" / "spotify-client-id"
 REDIRECCION = "http://127.0.0.1:8888/callback"
+PERMISOS = "user-top-read user-library-read"
+
+# Las tres ventanas que ofrece Spotify para lo mas escuchado.
+VENTANAS = {"corto": ("short_term", "últimas cuatro semanas"),
+            "medio": ("medium_term", "últimos seis meses"),
+            "largo": ("long_term", "de varios años")}
 
 
 def codigo_de_autorizacion(client_id, verificador):
@@ -200,7 +212,7 @@ def codigo_de_autorizacion(client_id, verificador):
     estado = secrets.token_urlsafe(16)
     url = "https://accounts.spotify.com/authorize?" + urllib.parse.urlencode({
         "client_id": client_id, "response_type": "code",
-        "redirect_uri": REDIRECCION, "scope": "user-library-read",
+        "redirect_uri": REDIRECCION, "scope": PERMISOS,
         "code_challenge_method": "S256", "code_challenge": reto, "state": estado})
 
     recogido = {}
@@ -259,6 +271,22 @@ def importar_spotify(args):
         return 1
 
     cabecera = {"Authorization": "Bearer " + token["access_token"]}
+    if args.completo:
+        discos = albumes_guardados(cabecera)
+        print(f"Spotify ha devuelto {len(discos)} álbumes guardados.")
+    else:
+        discos = albumes_mas_escuchados(cabecera, args.periodo, args.top)
+        print(f"{len(discos)} discos entre lo más escuchado ({VENTANAS[args.periodo][1]}).")
+    return volcar(discos, "musica", "album", args, cribar=False)
+
+
+def ficha_de_album(album):
+    return {"autor": ", ".join(a["name"] for a in album.get("artists", [])),
+            "year": (album.get("release_date") or "")[:4] or None,
+            "estado": "terminado"}
+
+
+def albumes_guardados(cabecera):
     discos = {}
     url = "https://api.spotify.com/v1/me/albums?limit=50"
     while url:
@@ -267,17 +295,121 @@ def importar_spotify(args):
             break
         for elemento in pagina.get("items", []):
             album = elemento.get("album", {})
+            if album.get("name"):
+                discos[album["name"]] = ficha_de_album(album)
+        url = pagina.get("next")
+    return discos
+
+
+def albumes_mas_escuchados(cabecera, periodo, cuantos):
+    """Spotify da las canciones mas escuchadas, no los discos: se agregan.
+
+    Un disco con cinco canciones en tu top pesa mas que uno con una suelta,
+    que es justo el orden que interesa.
+    """
+    ventana = VENTANAS[periodo][0]
+    peso, fichas = {}, {}
+    for desplazamiento in (0, 50):
+        pagina = pedir("https://api.spotify.com/v1/me/top/tracks"
+                       f"?limit=50&offset={desplazamiento}&time_range={ventana}",
+                       headers=cabecera)
+        for puesto, cancion in enumerate((pagina or {}).get("items", [])):
+            album = cancion.get("album", {})
             titulo = album.get("name")
             if not titulo:
                 continue
-            discos[titulo] = {
-                "autor": ", ".join(a["name"] for a in album.get("artists", [])),
-                "year": (album.get("release_date") or "")[:4] or None,
-                "estado": "terminado",
-            }
-        url = pagina.get("next")
-    print(f"Spotify ha devuelto {len(discos)} álbumes guardados.")
-    return volcar(discos, "musica", "album", args)
+            # Cuanto mas arriba esta la cancion, mas suma su disco.
+            peso[titulo] = peso.get(titulo, 0) + (100 - desplazamiento - puesto)
+            fichas.setdefault(titulo, ficha_de_album(album))
+    mejores = sorted(peso, key=peso.get, reverse=True)[:cuantos]
+    return {titulo: fichas[titulo] for titulo in mejores}
+
+
+# --- Spotify, por export -----------------------------------------------------
+
+def sacar(fila, *claves):
+    for clave in claves:
+        if fila.get(clave):
+            return fila[clave]
+    return None
+
+
+def importar_spotify_export(args):
+    """Lee el zip de Spotify sin necesidad de crear ninguna app.
+
+    Hay dos exports y no dan lo mismo. El de la cuenta trae YourLibrary.json
+    (lo guardado) y un historial reciente que NO lleva el nombre del album,
+    asi que de ese historial no salen discos. El historial ampliado, que tarda
+    hasta un mes, si lleva el album de cada reproduccion, y ese es el que
+    permite ordenar por lo mas escuchado de verdad.
+    """
+    guardados, escuchados, sin_album = {}, {}, 0
+    leidos, historial_corto = [], False
+    for nombre, datos in ficheros(args.ruta, r"\.json$"):
+        try:
+            contenido = json.loads(datos.decode("utf-8", "replace"))
+        except json.JSONDecodeError:
+            continue
+
+        if isinstance(contenido, dict) and "albums" in contenido:
+            for album in contenido["albums"] or []:
+                titulo = sacar(album, "album", "album_name", "name")
+                if titulo:
+                    guardados[titulo] = {"autor": sacar(album, "artist", "artist_name"),
+                                         "estado": "terminado"}
+            leidos.append(nombre)
+            continue
+
+        if isinstance(contenido, list) and contenido and isinstance(contenido[0], dict):
+            reproducciones = 0
+            for fila in contenido:
+                titulo = sacar(fila, "master_metadata_album_album_name", "albumName")
+                ms = sacar(fila, "ms_played", "msPlayed") or 0
+                if not titulo:
+                    if sacar(fila, "master_metadata_track_name", "trackName"):
+                        sin_album += 1
+                        historial_corto = True
+                    continue
+                dato = escuchados.setdefault(titulo, {"ms": 0, "autor": None,
+                                                      "estado": "terminado"})
+                dato["ms"] += int(ms)
+                dato["autor"] = dato["autor"] or sacar(
+                    fila, "master_metadata_album_artist_name", "artistName")
+                reproducciones += 1
+            if reproducciones:
+                leidos.append(nombre)
+
+    if not leidos and not historial_corto:
+        print("No he encontrado datos de Spotify en esa ruta.")
+        return 1
+    if leidos:
+        print(f"Leído: {', '.join(leidos[:5])}{' ...' if len(leidos) > 5 else ''}")
+    if sin_album:
+        print(plural(sin_album, "reproducción viene", "reproducciones vienen")
+              + " sin nombre de álbum. Eso es el historial\n"
+              "corto del export de la cuenta, que no lo trae: para ordenar por lo más\n"
+              "escuchado hace falta pedir el historial ampliado, que tarda hasta un mes.")
+
+    if args.completo:
+        if not guardados:
+            print("No hay YourLibrary.json en esa ruta, que es donde va lo guardado.")
+            return 1
+        print(f"{len(guardados)} álbumes guardados.")
+        return volcar(guardados, "musica", "album", args, cribar=False)
+
+    if not escuchados:
+        print("\nSin historial con álbum no puedo ordenar por lo más escuchado.\n"
+              "Con --completo entran los álbumes guardados que traiga el export.")
+        return 1
+    oidos = {k: v for k, v in escuchados.items() if v["ms"] >= MIN_MS}
+    mejores = sorted(oidos, key=lambda k: oidos[k]["ms"], reverse=True)[:args.top]
+    discos = {t: {"autor": oidos[t]["autor"], "estado": "terminado"} for t in mejores}
+    ms = sum(oidos[t]["ms"] for t in mejores)
+    tiempo = (plural(round(ms / 3600000), "hora", "horas") if ms >= 3600000
+              else plural(round(ms / 60000), "minuto", "minutos"))
+    print(plural(len(discos), "disco entre lo más escuchado",
+                 "discos entre lo más escuchado") + f" ({tiempo} en total).")
+    return volcar(discos, "musica", "album", args, cribar=False)
 
 
 # --- comun -------------------------------------------------------------------
@@ -314,8 +446,8 @@ def criba(elementos, args):
     return dentro, fuera
 
 
-def volcar(elementos, carpeta, tipo, args):
-    elementos, apartados = criba(elementos, args)
+def volcar(elementos, carpeta, tipo, args, cribar=True):
+    elementos, apartados = criba(elementos, args) if cribar else (elementos, {})
     avisos = parecidos(carpeta, elementos)
     nuevas = repetidas = 0
     for titulo, dato in sorted(elementos.items()):
@@ -332,14 +464,15 @@ def volcar(elementos, carpeta, tipo, args):
         else:
             repetidas += 1
 
-    verbo = "se crearían" if args.dry_run else "creadas"
-    print(f"\n{nuevas} fichas {verbo} en content/{carpeta}/, "
-          f"{repetidas} ya estaban.")
+    hecho = ("ficha se crearía", "fichas se crearían") if args.dry_run else (
+        "ficha creada", "fichas creadas")
+    print(f"\n{plural(nuevas, *hecho)} en content/{carpeta}/, "
+          f"{plural(repetidas, 'ya estaba', 'ya estaban')}.")
     if apartados:
         umbral = (f"menos de {args.min_horas} horas" if carpeta == "juegos"
                   else f"nota por debajo de {args.min_nota}, o ninguna")
-        print(f"{len(apartados)} apartadas por el modo rápido ({umbral}). "
-              f"Con --completo entran todas.")
+        print(plural(len(apartados), "ficha apartada", "fichas apartadas")
+              + f" por el modo rápido ({umbral}). Con --completo entran todas.")
     if avisos:
         print("\nSe parecen a fichas que ya tenías. Si son la misma obra, únelas:")
         for aviso in avisos:
@@ -374,9 +507,17 @@ def main():
     st.add_argument("ruta", help="el .zip del export o la carpeta")
     st.set_defaults(func=importar_steam)
 
-    sp = subs.add_parser("spotify", help="álbumes guardados, por OAuth")
+    sp = subs.add_parser("spotify", help="por OAuth: lo más escuchado, o lo guardado")
     sp.add_argument("--client-id", help=f"por defecto, {CLIENTE_SPOTIFY}")
+    sp.add_argument("--periodo", choices=list(VENTANAS), default="medio",
+                    help="ventana de lo más escuchado (por defecto, medio)")
+    sp.add_argument("--top", type=int, default=40, help="cuántos discos (por defecto 40)")
     sp.set_defaults(func=importar_spotify)
+
+    se = subs.add_parser("spotify-export", help="lo mismo desde el zip, sin crear app")
+    se.add_argument("ruta", help="el .zip del export de Spotify o la carpeta")
+    se.add_argument("--top", type=int, default=40, help="cuántos discos (por defecto 40)")
+    se.set_defaults(func=importar_spotify_export)
 
     args = p.parse_args()
     return args.func(args)
