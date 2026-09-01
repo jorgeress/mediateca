@@ -88,6 +88,8 @@ content/            la vault de Obsidian: lo único que se escribe a mano
   *.base            las vistas de cada sección
   _plantillas/      plantilla de ficha (no se publica)
   assets/portadas/  imágenes
+docs/
+  importar.md       qué se puede sacar de cada fuente, y el flujo completo
 scripts/
   importar.py       crea fichas desde Letterboxd, Steam y Spotify
   mediateca.py      lo que comparten los dos scripts
@@ -168,6 +170,11 @@ ascender una ficha se le quita la línea `draft` y se le pone nota y las dos
 frases del porqué, que es lo único que estas fuentes no saben. Si prefieres que
 entren publicadas directamente, `--sin-borrador`.
 
+Por defecto va en **modo rápido**: solo entra lo que da alguna señal de haberte
+importado, 8 horas jugadas en Steam y 4 estrellas en Letterboxd. Lo que se queda
+fuera se cuenta por pantalla, no desaparece en silencio, y con `--completo`
+entra todo. Los umbrales se mueven con `--min-horas` y `--min-nota`.
+
 Cada fuente da lo suyo, y ninguna lo da todo:
 
 | Fuente | Cómo | Qué trae |
@@ -190,6 +197,10 @@ autorización va por PKCE, y el permiso que pide es solo de lectura de tu
 biblioteca.
 
 Después de importar, `scripts/portadas.py` le pone carátula a todo lo nuevo.
+
+Lo que da y lo que no da cada fuente, los dos exports distintos de Spotify, y
+qué herramientas de otros hacen ya parte de esto, está en
+[`docs/importar.md`](docs/importar.md).
 
 ## Portadas
 

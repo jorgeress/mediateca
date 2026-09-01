@@ -5,6 +5,10 @@
   scripts/importar.py steam RUTA        export de datos de Steam (.zip o carpeta)
   scripts/importar.py spotify           albumes guardados, por OAuth
 
+Por defecto va en modo rapido: solo entra lo que da senal de haberte importado
+(8 horas jugadas en Steam, 4 estrellas en Letterboxd). Con --completo entra
+todo, y los umbrales se mueven con --min-horas y --min-nota.
+
 Todo entra en borrador: `draft: true`, `nota` vacia y el cuerpo en blanco. La
 excepcion son las peliculas, que si traen tu puntuacion porque Letterboxd es la
 unica de las tres fuentes que sabe si algo te gusto. Quartz no publica lo que
@@ -33,6 +37,11 @@ from pathlib import Path
 from mediateca import VAULT, nombre_de_fichero, normal, pedir
 
 CAMPOS = ["tipo", "year", "autor", "nota", "estado", "favorito", "portada", "tags"]
+
+# Umbrales del modo rapido. Ninguna fuente sabe si algo te gusto salvo
+# Letterboxd, asi que el resto se criba por la unica senal que dan: el uso.
+MIN_HORAS = 8
+MIN_NOTA = 8  # cuatro estrellas de Letterboxd
 
 
 def yaml_valor(v):
@@ -288,7 +297,25 @@ def parecidos(carpeta, titulos):
     return avisos
 
 
+def criba(elementos, args):
+    """Aparta lo que no llega al umbral. Devuelve lo que entra y lo que no."""
+    if args.completo:
+        return elementos, {}
+    dentro, fuera = {}, {}
+    for titulo, dato in elementos.items():
+        if dato.get("horas") is not None:
+            pasa = dato["horas"] >= args.min_horas
+        elif dato.get("nota") is not None:
+            pasa = dato["nota"] >= args.min_nota
+        else:
+            # Sin horas ni nota no hay con que decidir: fuera del modo rapido.
+            pasa = False
+        (dentro if pasa else fuera)[titulo] = dato
+    return dentro, fuera
+
+
 def volcar(elementos, carpeta, tipo, args):
+    elementos, apartados = criba(elementos, args)
     avisos = parecidos(carpeta, elementos)
     nuevas = repetidas = 0
     for titulo, dato in sorted(elementos.items()):
@@ -308,6 +335,11 @@ def volcar(elementos, carpeta, tipo, args):
     verbo = "se crearían" if args.dry_run else "creadas"
     print(f"\n{nuevas} fichas {verbo} en content/{carpeta}/, "
           f"{repetidas} ya estaban.")
+    if apartados:
+        umbral = (f"menos de {args.min_horas} horas" if carpeta == "juegos"
+                  else f"nota por debajo de {args.min_nota}, o ninguna")
+        print(f"{len(apartados)} apartadas por el modo rápido ({umbral}). "
+              f"Con --completo entran todas.")
     if avisos:
         print("\nSe parecen a fichas que ya tenías. Si son la misma obra, únelas:")
         for aviso in avisos:
@@ -324,6 +356,12 @@ def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--dry-run", action="store_true", help="dice qué haría, sin escribir")
+    p.add_argument("--completo", action="store_true",
+                   help="sin umbrales: entra todo lo que traiga el export")
+    p.add_argument("--min-horas", type=int, default=MIN_HORAS,
+                   help=f"juegos: horas mínimas jugadas (por defecto {MIN_HORAS})")
+    p.add_argument("--min-nota", type=int, default=MIN_NOTA,
+                   help=f"películas: nota mínima (por defecto {MIN_NOTA}, o sea 4 estrellas)")
     p.add_argument("--sin-borrador", action="store_true",
                    help="las fichas entran publicadas, sin draft")
     subs = p.add_subparsers(dest="fuente", required=True)
