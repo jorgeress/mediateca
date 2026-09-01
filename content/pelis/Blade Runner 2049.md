@@ -5,7 +5,7 @@ autor: Denis Villeneuve
 nota: 10
 estado: vista
 favorito: true
-portada:
+portada: "[[blade-runner-2049.webp]]"
 tags:
   - ciencia-ficcion
 ---

@@ -177,25 +177,46 @@ scripts/portadas.py --force         # rehace también las que ya la tienen
 scripts/portadas.py --dry-run       # dice qué haría, sin tocar nada
 ```
 
-Cada sección tira de la fuente que mejor la conoce, y todas menos una funcionan
-sin registrarse:
+Cada sección tira de la fuente que mejor la conoce, y ninguna pide registrarse:
 
 | Sección | Fuente | Clave |
 | --- | --- | --- |
 | Juegos | Steam | no |
 | Libros | Open Library | no |
 | Música | MusicBrainz + Cover Art Archive | no |
-| Películas | TMDB | sí, gratuita |
+| Películas | Wikipedia, o TMDB si hay clave | opcional |
 
-Para las películas hace falta una clave de TMDB, que se saca en un minuto en
+Las películas son el caso raro. Para libros y discos existen catálogos abiertos
+(Open Library es del Internet Archive, Cover Art Archive es de MusicBrainz) y
+los juegos los sirve la propia tienda, pero para cine no hay nada equivalente:
+todas las bases de datos de películas con imágenes decentes piden una clave, y
+las que no la piden acaban sacando los pósters de TMDB por detrás.
+
+Así que la vía por defecto es Wikipedia. El script busca la película en la
+Wikipedia en español, salta al artículo en inglés por los enlaces de idioma
+(la española no admite material con copyright, así que las carátulas solo
+viven en la inglesa) y se queda con la imagen de la ficha lateral. Sin clave,
+sin registro y con una fuente que no va a desaparecer. La pega es la
+resolución: Wikipedia obliga a que el material no libre esté en baja
+resolución, así que el póster sale a unos 220 px de ancho. Justo lo que mide
+la tarjeta, o sea que se ve bien en una pantalla normal y algo blando en una
+de mucha densidad. Y siempre es el cartel internacional, no el español.
+
+Si esa diferencia te importa, TMDB da 500 px y el cartel de la edición
+española. La clave es gratuita y de uso personal, pero su formulario pide
+nombre, teléfono y dirección postal, que para un catálogo de casa es bastante
+peaje. Si aun así la sacas, en
 [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api):
 
 ```bash
 mkdir -p ~/.config/mediateca && echo TU_CLAVE > ~/.config/mediateca/tmdb
+scripts/portadas.py --seccion pelis --force
 ```
 
-El script la busca ahí o en la variable `TMDB_API_KEY`. Nunca se guarda en el
-repositorio.
+El script la busca ahí o en la variable `TMDB_API_KEY`, y si la encuentra la
+prefiere a Wikipedia. Nunca se guarda en el repositorio. Si llegas a usarla, sus
+términos piden atribución: hay que añadirla a `content/creditos.md`, donde ahora
+solo está la de Wikipedia.
 
 Si una ficha no se encuentra (la búsqueda va por el nombre del fichero), lo más
 rápido es dejar la imagen a mano en `assets/portadas/` y escribir el enlace en
@@ -211,8 +232,6 @@ películas y libros, y `1` en música y en el *Top*, que es un mosaico cuadrado.
 
 ## Cosas a medias
 
-- Los pósters de las tres películas siguen vacíos, a la espera de la clave de
-  TMDB. En cuanto esté, `scripts/portadas.py --seccion pelis` los rellena.
 - El plugin que renderiza las Bases solo trae sus textos en inglés. El único que
   se veía era el contador de resultados, y está oculto por CSS. Si algún día
   aparece otro, habrá que traducirlo a mano.

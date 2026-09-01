@@ -5,7 +5,7 @@ autor: Bong Joon-ho
 nota: 9
 estado: vista
 favorito: true
-portada:
+portada: "[[parasitos.webp]]"
 tags:
   - drama
   - thriller

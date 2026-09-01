@@ -6,7 +6,8 @@ Cada seccion tira de la fuente que mejor la conoce:
   juegos  Steam (busqueda publica, sin clave)
   libros  Open Library (sin clave)
   musica  MusicBrainz + Cover Art Archive (sin clave)
-  pelis   TMDB (clave gratuita en TMDB_API_KEY o ~/.config/mediateca/tmdb)
+  pelis   TMDB si hay clave (TMDB_API_KEY o ~/.config/mediateca/tmdb),
+          y si no Wikipedia, sin clave pero en baja resolucion
 
 Uso:
   scripts/portadas.py                 rellena las fichas sin portada
@@ -100,8 +101,10 @@ def guardar(datos, destino, cuadrada=False):
     img = Image.open(BytesIO(datos))
     if img.mode not in ("RGB", "RGBA"):
         img = img.convert("RGB")
-    alto = round(img.height * ANCHO / img.width)
-    img = img.resize((ANCHO, alto), Image.LANCZOS)
+    if img.width > ANCHO:
+        # Ampliar una portada pequena solo la emborrona y la engorda.
+        alto = round(img.height * ANCHO / img.width)
+        img = img.resize((ANCHO, alto), Image.LANCZOS)
     destino.parent.mkdir(parents=True, exist_ok=True)
     img.save(destino, "WEBP", quality=82, method=6)
     del cuadrada
@@ -165,10 +168,7 @@ def clave_tmdb():
     return fichero.read_text().strip() if fichero.exists() else None
 
 
-def portada_peli(titulo, campos):
-    clave = clave_tmdb()
-    if not clave:
-        return None, "SIN_CLAVE"
+def portada_peli_tmdb(titulo, campos, clave):
     params = {"api_key": clave, "query": titulo, "language": "es-ES"}
     if campos.get("year"):
         params["year"] = campos["year"]
@@ -181,6 +181,68 @@ def portada_peli(titulo, campos):
         if img and len(img) > 5000:
             return img, f"TMDB ({peli.get('title')})"
     return None, None
+
+
+def wiki(host, params):
+    """Una llamada a la API de MediaWiki, sin apretar: devuelve 429 enseguida."""
+    time.sleep(0.6)
+    return pedir(f"https://{host}.wikipedia.org/w/api.php?format=json&"
+                 + urllib.parse.urlencode(params))
+
+
+def articulos_ingleses(titulo, year):
+    """Del titulo en espanol al articulo en ingles, que es donde esta el poster.
+
+    La Wikipedia en espanol no admite material con copyright, asi que las
+    caratulas solo viven en la inglesa. El salto se hace por los enlaces de
+    idioma del articulo espanol, que es lo que resuelve el titulo traducido.
+    """
+    busqueda = wiki("es", {"action": "query", "list": "search", "srlimit": 5,
+                           "srsearch": f"{titulo} {year or ''} pelicula".strip()})
+    for resultado in (busqueda or {}).get("query", {}).get("search", []):
+        enlaces = wiki("es", {"action": "query", "prop": "langlinks", "lllang": "en",
+                              "redirects": 1, "titles": resultado["title"]})
+        pagina = list((enlaces or {}).get("query", {}).get("pages", {}).values())
+        for idioma in (pagina[0].get("langlinks") if pagina else None) or []:
+            yield idioma["*"]
+
+
+def imagen_infobox(articulo):
+    datos = wiki("en", {"action": "parse", "prop": "text", "section": 0,
+                        "redirects": 1, "page": articulo})
+    html = (datos or {}).get("parse", {}).get("text", {}).get("*", "")
+    m = re.search(r'class="[^"]*infobox-image[^"]*".*?<img[^>]+src="([^"]+)"', html, re.S)
+    if not m:
+        return None
+    src = "https:" + m.group(1).split("?")[0].replace("&amp;", "&")
+    # De la miniatura al fichero original, que ya es pequeno de por si.
+    return re.sub(r"/thumb(/.*)/\d+px-[^/]+$", r"\1", src)
+
+
+def portada_peli_wikipedia(titulo, campos):
+    for articulo in articulos_ingleses(titulo, campos.get("year")):
+        src = imagen_infobox(articulo)
+        if not src:
+            continue
+        img = pedir(src, binario=True)
+        if img and len(img) > 5000:
+            return img, f"Wikipedia ({articulo})"
+    return None, None
+
+
+def portada_peli(titulo, campos):
+    """TMDB si hay clave; si no, el poster del infobox de Wikipedia.
+
+    Wikipedia obliga a que el material no libre este en baja resolucion, asi
+    que sale a unos 220 px de ancho: justo lo que mide la tarjeta, nitido en
+    una pantalla normal y algo blando en una de mucha densidad.
+    """
+    clave = clave_tmdb()
+    if clave:
+        img, fuente = portada_peli_tmdb(titulo, campos, clave)
+        if img:
+            return img, fuente
+    return portada_peli_wikipedia(titulo, campos)
 
 
 FUENTES = {"juego": portada_juego, "peli": portada_peli,
@@ -208,7 +270,7 @@ def main():
     p.add_argument("--dry-run", action="store_true", help="no baja ni escribe nada")
     args = p.parse_args()
 
-    faltan_claves = False
+    sin_tmdb = False
     hechas = fallidas = saltadas = 0
 
     for md in fichas(args):
@@ -229,10 +291,8 @@ def main():
             continue
 
         img, fuente = FUENTES[tipo](titulo, campos)
-        if fuente == "SIN_CLAVE":
-            faltan_claves = True
-            fallidas += 1
-            continue
+        if fuente and fuente.startswith("Wikipedia"):
+            sin_tmdb = True
         if not img:
             print(f"  ✗  {etiqueta}: sin portada en la fuente")
             fallidas += 1
@@ -246,11 +306,11 @@ def main():
 
     print(f"\n{hechas} portadas nuevas, {fallidas} sin resolver, "
           f"{saltadas} ya la tenian.")
-    if faltan_claves:
-        print("\nLas películas necesitan una clave gratuita de TMDB:\n"
-              "  https://www.themoviedb.org/settings/api\n"
-              "  mkdir -p ~/.config/mediateca && "
-              "echo TU_CLAVE > ~/.config/mediateca/tmdb")
+    if sin_tmdb:
+        print("\nLos pósters salen de Wikipedia, en baja resolución porque es lo\n"
+              "único que permite alojar allí el material con copyright. Con una\n"
+              "clave de TMDB en ~/.config/mediateca/tmdb salen a 500 px y con el\n"
+              "cartel de la edición española.")
     return 0
 
 

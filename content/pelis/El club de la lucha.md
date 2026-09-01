@@ -5,7 +5,7 @@ autor: David Fincher
 nota: 9
 estado: vista
 favorito: false
-portada:
+portada: "[[el-club-de-la-lucha.webp]]"
 tags:
   - drama
 ---
