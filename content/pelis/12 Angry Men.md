@@ -1,0 +1,12 @@
+---
+tipo: peli
+year: 1957
+autor:
+nota: 10
+estado: terminado
+favorito: false
+portada: "[[12-angry-men.webp]]"
+tags: []
+draft: true
+---
+

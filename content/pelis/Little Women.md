@@ -1,0 +1,12 @@
+---
+tipo: peli
+year: 2019
+autor:
+nota: 8
+estado: terminado
+favorito: false
+portada: "[[little-women.webp]]"
+tags: []
+draft: true
+---
+
