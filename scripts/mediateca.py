@@ -68,6 +68,15 @@ def frontmatter(texto):
     return campos
 
 
+def vacio(valor):
+    """Si un campo esta sin poner. `tags: []` cuenta como vacio; con algo, no."""
+    if valor is None:
+        return True
+    if isinstance(valor, (list, tuple)):
+        return not valor
+    return valor.strip() in ("", "[]", "{}")
+
+
 def yaml_valor(v):
     if v is None or v == "":
         return ""

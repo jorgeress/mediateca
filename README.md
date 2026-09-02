@@ -96,6 +96,7 @@ scripts/
   portadas.py       baja las carátulas y rellena el campo `portada`
   datos.py          rellena año, autor y tags desde Steam y Wikipedia
   vistazo.py        levanta el sitio con los borradores dentro
+  estado.py         qué hay, qué falta y qué se publica
 quartz/             el generador (fork de Quartz, no se toca)
 quartz.config.yaml  configuración del sitio
 public/             lo que genera el build; no se versiona
@@ -333,6 +334,42 @@ con un degradado y la rejilla no se descuadra.
 Las relaciones de aspecto de cada galería están puestas para lo que enseñan:
 `0.67` (2:3, el formato de un póster o una portada de libro) en juegos,
 películas y libros, y `1` en música y en el *Top*, que es un mosaico cuadrado.
+
+## Cómo voy
+
+Las galerías enseñan lo que hay. Para saber por dónde seguir hace falta lo
+contrario, que es lo que **no** hay:
+
+```bash
+scripts/estado.py                  # el resumen
+scripts/estado.py --seccion pelis  # solo esa carpeta
+scripts/estado.py --detalle        # además, qué ficha le falta cada cosa
+```
+
+```
+FICHAS
+              total  borrador  publicadas  con texto
+  juegos         44        44           0          0
+  pelis          37        37           0          0
+
+EN LA WEB  ························  0 de 81
+
+SIN RELLENAR
+  nota         44   ███████████·············
+  tags         37   █████████████···········
+  texto        81   ························
+
+NOTAS      10:32  9:1  8:4
+  Top.base pide 9 o más: 33 de 37 fichas con nota entrarían.
+```
+
+El corte del *Top* no está escrito en el script: lo lee de `Top.base`, así que si
+cambias el criterio, esta cuenta cambia con él.
+
+Avisa además de dos cosas que no se ven de otra manera: fichas que apuntan a una
+imagen que ya no está, e imágenes en `assets/portadas/` que ya no usa ninguna
+ficha. No consulta nada por red ni escribe nada, así que se puede lanzar cuando
+sea.
 
 ## Verlo antes de ascender
 

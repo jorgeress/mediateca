@@ -32,22 +32,13 @@ import time
 from pathlib import Path
 
 from mediateca import (SECCIONES, VAULT, articulo_html, articulos_ingleses,
-                       escribir_campos, frontmatter, pedir)
+                       escribir_campos, frontmatter, pedir, vacio)
 
 # La tienda de Steam corta sobre las 200 peticiones cada cinco minutos. Con una
 # biblioteca normal no se llega, pero se va sin prisa por si acaso.
 ESPERA = 1.5
 
 MAX_TAGS = 4  # los generos de Steam vienen del mas general al mas concreto
-
-
-def vacio(valor):
-    """Si el campo esta sin poner. `tags: []` cuenta como vacio; con algo, no."""
-    if valor is None:
-        return True
-    if isinstance(valor, (list, tuple)):
-        return not valor
-    return valor.strip() in ("", "[]", "{}")
 
 
 def etiqueta(texto):
