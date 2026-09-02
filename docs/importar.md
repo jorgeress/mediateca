@@ -27,6 +27,20 @@ una línea. Lo que no encontré es nada que junte juegos, cine y música en una
 sola vault con fichas tuyas, que es de lo que va esto. Si algún día solo te
 importa el cine, usa uno de esos.
 
+Sobre **media-db** en concreto, que es el que más se parece a la parte de
+búsqueda de libros de aquí: para libros consulta **la misma API que este repo,
+Open Library, y tampoco pide clave**. No aporta una fuente que no esté ya. Lo
+que aporta es el formulario, y a cambio trae su propio esquema de campos y su
+propia convención de nombres para las portadas. Se puede doblar con sus
+*mappings* y sus plantillas hasta que escupa `tipo/year/autor/nota/...`, pero
+entonces hay dos sistemas que tienen que seguir de acuerdo, y el día que el
+plugin cambie algo se rompe en silencio. Por eso la búsqueda está aquí dentro,
+en `importar.py libro`, y no delegada a un plugin.
+
+Para lo demás, sus APIs sí piden clave: OMDb y TMDB para cine, Comic Vine para
+cómics, Boardgame Geek para juegos de mesa. Solo Steam, MusicBrainz, Wikipedia
+y Open Library van sin registro, que son justo las cuatro que usa este repo.
+
 ## ¿Hace falta pagar?
 
 **No.** Ninguna de las vías que usa esto pide pagar, ni registrar una
@@ -207,8 +221,37 @@ puntuaciones.
 
 ### Libros
 
-De momento a mano. No hay una fuente tuya equivalente, y es la lista más corta
-de las cuatro.
+No hay export que valga, y no es un fallo: no existe un sitio donde tengas
+apuntado lo que has leído. Goodreads sería el equivalente, pero su API está
+cerrada a nuevos desarrolladores desde 2020 y no ha vuelto. Así que la sección
+no va por volcado sino **por búsqueda, obra a obra**, contra Open Library, que
+es el catálogo del Internet Archive y la misma fuente de la que ya salían las
+portadas de libro:
+
+```bash
+scripts/importar.py libro "el nombre del viento"
+scripts/importar.py libro "dune" --nota 9 --estado terminado
+scripts/importar.py libro "sapiens" --elegir 2   # sin preguntar
+```
+
+Enseña los resultados y eliges tú. **Eso no es un trámite que se pueda saltar**:
+Open Library devuelve la edición inglesa aunque busques en español («el nombre
+del viento» trae *The Name of the Wind*), y con los títulos cortos se cuela
+cualquier cosa. Quedarse con el primero a ciegas es lo que hace que una ficha
+acabe con los datos de otro libro. Por eso `--elegir N` existe pero no es lo
+que pasa por defecto, y sin terminal para preguntar el script enseña la lista y
+para en vez de inventarse una respuesta.
+
+Se guarda el `coverid` de la edición elegida, así que la portada se baja exacta
+y se puede rehacer siempre igual, igual que con el `appid` y el `mbid`.
+
+Lo que **no** se puede: sacar una nota tuya, porque no hay cuenta de la que
+sacarla. Se pone con `--nota` al crearla o a mano después.
+
+**Cómics.** Open Library los cataloga y bastante bien: *Watchmen*, *Maus* y
+*Persépolis* salen los tres con portada. Hoy entran como `tipo: libro`. Si algún
+día quieres separarlos, es una entrada más en `SECCIONES` y un `.base`, no una
+fuente nueva.
 
 ## Los dos modos
 
@@ -254,7 +297,8 @@ scripts/importar.py --dry-run ...                               # sin escribir
    Si tienes cuenta en ListenBrainz con escuchas, los discos salen en el
    momento y no hace falta esperar a Spotify.
 6. **Más adelante**, si quieres el archivo completo y no solo lo destacado,
-   `--completo`. Los libros, a mano.
+   `--completo`. Los libros no entran por aquí: van uno a uno con
+   `importar.py libro "título"`, cuando te acuerdes de uno.
 
 ## Personalizarlo
 

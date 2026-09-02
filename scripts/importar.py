@@ -6,6 +6,10 @@
   steam RUTA               juegos: la pagina del perfil o el export
   listenbrainz USUARIO     discos: lo mas escuchado, sin clave ninguna
   spotify-export RUTA      discos: lo mismo desde el zip de Spotify
+  libro TITULO             libros: uno a uno, buscando en Open Library
+
+Las cinco primeras vuelcan de golpe una lista que ya es tuya. Los libros van
+aparte porque no hay tal lista: se busca en el catalogo y eliges tu.
 
 Ninguna de estas vias pide pagar ni registrar una aplicacion. Se antepone el
 nombre del script: scripts/importar.py letterboxd-rss tu_usuario
@@ -31,6 +35,7 @@ import io
 import json
 import re
 import sys
+import urllib.parse
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
@@ -407,6 +412,118 @@ def importar_spotify_export(args):
     return volcar(discos, "musica", "album", args, cribar=False)
 
 
+# --- Open Library, obra a obra -----------------------------------------------
+
+# Lo que hace falta para pintar una linea de resultado y para dejar la ficha
+# lista: el cover_i es el identificador de la portada, y con el se baja exacta.
+CAMPOS_OL = ("title,author_name,first_publish_year,cover_i,cover_edition_key,key")
+
+ESTADOS = ["pendiente", "en curso", "terminado", "abandonado"]
+
+
+def buscar_libros(consulta, cuantos):
+    url = (f"https://openlibrary.org/search.json?limit={cuantos}&fields={CAMPOS_OL}"
+           "&q=" + urllib.parse.quote(consulta))
+    return ((pedir(url) or {}).get("docs")) or []
+
+
+def describir(doc):
+    # Los titulos del catalogo traen a veces saltos de linea y sangrias dentro,
+    # que descuadran la lista de resultados.
+    titulo = re.sub(r"\s+", " ", doc.get("title") or "").strip()
+    if len(titulo) > 70:
+        titulo = titulo[:69].rstrip() + "…"
+    autor = (doc.get("author_name") or ["autor desconocido"])[0]
+    year = doc.get("first_publish_year") or "s. f."
+    marca = "" if doc.get("cover_i") else "   (sin portada)"
+    return f"{titulo} — {autor} ({year}){marca}"
+
+
+def preguntar(candidatos):
+    """Elegir a mano es el punto, no un tramite.
+
+    Open Library devuelve la edicion inglesa aunque busques en español ("el
+    nombre del viento" trae "The Name of the Wind"), y con los titulos cortos
+    cuela cualquier cosa. Acertar por el primer resultado es justo lo que hace
+    que una ficha acabe con los datos de otro libro.
+    """
+    for i, doc in enumerate(candidatos, 1):
+        print(f"  {i}) {describir(doc)}")
+    while True:
+        try:
+            resp = input(f"\n¿Cuál? (1-{len(candidatos)}, Enter para el 1, "
+                         "0 si ninguno): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return None
+        if resp == "":
+            return candidatos[0]
+        if resp == "0":
+            return None
+        if resp.isdigit() and 1 <= int(resp) <= len(candidatos):
+            return candidatos[int(resp) - 1]
+        print("  Eso no es una de las opciones.")
+
+
+def importar_libro(args):
+    """Busca un libro en Open Library y deja la ficha, uno a uno.
+
+    Las otras fuentes vuelcan tu biblioteca entera de golpe porque es tuya y ya
+    esta elegida. Con los libros no hay biblioteca que volcar: hay un catalogo
+    publico, asi que la eleccion la tienes que hacer tu obra a obra, como en un
+    buscador. Es la misma API que usan los plugins que hacen esto, y tampoco
+    pide clave.
+    """
+    candidatos = buscar_libros(args.titulo, args.resultados)
+    if not candidatos:
+        print(f"Open Library no encuentra nada con «{args.titulo}».\n"
+              "Prueba con el título en inglés: su catálogo va casi todo por ahí.")
+        return 1
+
+    if args.elegir:
+        if args.elegir > len(candidatos):
+            print(f"Solo hay {len(candidatos)} resultados.")
+            return 1
+        doc = candidatos[args.elegir - 1]
+    elif not sys.stdin.isatty():
+        for i, cand in enumerate(candidatos, 1):
+            print(f"  {i}) {describir(cand)}")
+        print("\nSin terminal para preguntar. Repite con --elegir N.")
+        return 1
+    else:
+        doc = preguntar(candidatos)
+        if doc is None:
+            print("No se ha creado nada.")
+            return 0
+
+    titulo = re.sub(r"\s+", " ", doc.get("title") or args.titulo).strip()
+    campos = {"tipo": "libro", "year": doc.get("first_publish_year"),
+              "autor": (doc.get("author_name") or [None])[0], "nota": args.nota,
+              "estado": args.estado, "favorito": False, "portada": None, "tags": None}
+    if doc.get("cover_i"):
+        # Igual que el appid en los juegos y el mbid en los discos: con el
+        # identificador, portadas.py baja la de esta edicion y no una parecida.
+        campos["coverid"] = doc["cover_i"]
+
+    if args.dry_run:
+        print(f"\nSe crearía content/libros/{nombre_de_fichero(titulo)}.md")
+        return 0
+
+    destino = escribir_ficha("libros", titulo, campos, borrador=not args.sin_borrador)
+    if not destino:
+        print(f"\n«{titulo}» ya estaba en content/libros/.")
+        return 0
+
+    print(f"\nCreada {destino.relative_to(VAULT.parent)}")
+    for aviso in parecidos("libros", [titulo]):
+        print("  Se parece a una que ya tenías: " + aviso)
+    if not args.sin_borrador:
+        print("Entra con draft: true, así que no sale en la web hasta que le quites\n"
+              "la línea. En Obsidian se ve ya.")
+    print("Ahora: scripts/portadas.py")
+    return 0
+
+
 # --- comun -------------------------------------------------------------------
 
 def parecidos(carpeta, titulos):
@@ -524,6 +641,17 @@ def main():
                     help="ventana (por defecto, año)")
     lb.add_argument("--top", type=int, default=40, help="cuántos discos (por defecto 40)")
     lb.set_defaults(func=importar_listenbrainz)
+
+    li = subs.add_parser("libro", help="busca un libro en Open Library y crea la ficha")
+    li.add_argument("titulo", help="el título, o título y autor")
+    li.add_argument("--elegir", type=int, metavar="N",
+                    help="quédate con el resultado N sin preguntar")
+    li.add_argument("--resultados", type=int, default=5,
+                    help="cuántos resultados enseñar (por defecto 5)")
+    li.add_argument("--nota", type=int, help="ponle ya la nota, del 1 al 10")
+    li.add_argument("--estado", choices=ESTADOS, default="pendiente",
+                    help="por defecto, pendiente")
+    li.set_defaults(func=importar_libro)
 
     se = subs.add_parser("spotify-export", help="lo mismo desde el zip, sin crear app")
     se.add_argument("ruta", help="el .zip del export de Spotify o la carpeta")

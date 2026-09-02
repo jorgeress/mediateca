@@ -91,7 +91,7 @@ content/            la vault de Obsidian: lo único que se escribe a mano
 docs/
   importar.md       qué se puede sacar de cada fuente, y el flujo completo
 scripts/
-  importar.py       crea fichas desde Letterboxd, Steam y Spotify
+  importar.py       crea fichas desde Letterboxd, Steam, Spotify y Open Library
   mediateca.py      lo que comparten los tres scripts
   portadas.py       baja las carátulas y rellena el campo `portada`
   datos.py          completa los campos que la fuente no supo dar
@@ -164,6 +164,7 @@ scripts/importar.py letterboxd ~/Descargas/letterboxd-export.zip  # con Pro
 scripts/importar.py steam ~/Descargas/juegos.html  # tu página de juegos
 scripts/importar.py listenbrainz TU_USUARIO     # discos más escuchados
 scripts/importar.py spotify-export ~/Descargas/spotify.zip   # o desde el zip
+scripts/importar.py libro "el nombre del viento"  # uno a uno, a mano
 scripts/importar.py --dry-run letterboxd ...   # dice qué haría, sin escribir
 ```
 
@@ -212,6 +213,56 @@ las dos se cambiaron por vías abiertas. Lo que da y lo que no da cada fuente, y
 qué herramientas de otros hacen ya parte de esto, está en
 [`docs/importar.md`](docs/importar.md).
 
+## Libros: uno a uno, buscando
+
+Las otras tres secciones se vuelcan de golpe porque la lista ya es tuya y ya
+está elegida: tu diario de Letterboxd, tu biblioteca de Steam, tus escuchas. Con
+los libros no hay nada que volcar. No existe un sitio donde tengas apuntado lo
+que has leído, y si existiera sería otra cuenta más.
+
+Lo que sí hay es un catálogo público, así que la sección va por búsqueda, obra a
+obra:
+
+```bash
+scripts/importar.py libro "el nombre del viento"
+scripts/importar.py libro "dune" --nota 9 --estado terminado
+scripts/importar.py libro "sapiens" --elegir 2     # sin preguntar
+scripts/importar.py libro "watchmen" --resultados 10
+```
+
+Enseña los resultados y eliges tú:
+
+```
+  1) The Name of the Wind — Patrick Rothfuss (2007)
+  2) The Wise Man's Fear — Patrick Rothfuss (2011)
+  3) El Nombre de la Ballena Coleccion Los Especiales de a la Orilla del V… — …
+  4) El origen de los nombres de los países del mundo — Edgardo D. Otero (2003)
+
+¿Cuál? (1-5, Enter para el 1, 0 si ninguno):
+```
+
+**Elegir a mano es el punto, no un trámite.** Open Library devuelve la edición
+inglesa aunque busques en español, y con los títulos cortos se cuela cualquier
+cosa: mira el resultado 3. Quedarse con el primero a ciegas es exactamente lo
+que hace que una ficha acabe con los datos de otro libro.
+
+De la edición que elijas se guarda su `coverid`, igual que el `appid` en los
+juegos y el `mbid` en los discos. Con él, `scripts/portadas.py` baja la portada
+**de esa edición** y no una parecida de nombre.
+
+La ficha entra en borrador como todo lo demás, y con `--nota` y `--estado` puedes
+dejarla puesta de una vez si el libro ya lo has leído.
+
+Es la misma API que usan los plugins de Obsidian que hacen esto, y tampoco pide
+clave ni registro. Está aquí y no en un plugin para que las fichas salgan
+directamente en el formato de la vault, sin un segundo esquema que mantener de
+acuerdo con el primero.
+
+Sirve igual para cómics y novela gráfica, que Open Library cataloga: *Watchmen*,
+*Maus* y *Persépolis* salen con portada. Hoy entrarían como `tipo: libro`; una
+sección propia sería añadir una entrada en `SECCIONES` y un `.base` que la
+filtre.
+
 ## Portadas
 
 Las carátulas se guardan **como fichero, dentro de la vault**, en
@@ -250,7 +301,7 @@ registro**. Se clona el repositorio y funciona:
 | Sección | Fuente |
 | --- | --- |
 | Juegos | Steam |
-| Libros | Open Library |
+| Libros | Open Library (exacta, si la ficha trae `coverid`) |
 | Música | MusicBrainz + Cover Art Archive |
 | Películas | Wikipedia |
 

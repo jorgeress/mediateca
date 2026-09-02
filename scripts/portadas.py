@@ -81,6 +81,13 @@ def portada_juego(titulo, campos):
 
 
 def portada_libro(titulo, campos):
+    if campos.get("coverid"):
+        # Viene de `importar.py libro`: la edicion ya esta elegida a mano, asi
+        # que no hay que volver a adivinarla por titulo.
+        img = pedir(f"https://covers.openlibrary.org/b/id/{campos['coverid']}-L.jpg",
+                    binario=True)
+        if img and len(img) > 5000:
+            return img, "Open Library (exacta, por coverid)"
     consulta = " ".join(filter(None, [titulo, campos.get("autor")]))
     url = ("https://openlibrary.org/search.json?limit=5"
            "&fields=title,author_name,cover_i,first_publish_year&q="
