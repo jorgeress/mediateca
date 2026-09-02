@@ -35,7 +35,7 @@ aplicación, ni pedir una clave de API. Comprobado en septiembre de 2026:
 | Sección | Vía | Qué hace falta |
 | --- | --- | --- |
 | Películas | RSS del perfil de Letterboxd | tu nombre de usuario |
-| Juegos | Tu página de juegos, guardada del navegador | la sesión abierta |
+| Juegos | Tu página de juegos, guardada con Ctrl+S | la sesión abierta |
 | Discos | API de estadísticas de ListenBrainz | tu nombre de usuario |
 | Juegos | Export de datos de Steam | tu cuenta, y esperar unos días |
 | Discos | Export de datos de Spotify | tu cuenta, y esperar |
@@ -93,20 +93,25 @@ Lo que **no** se puede: sacar el director. No está en el export ni en el RSS.
 ### Juegos
 
 Lo rápido es **tu propia página de juegos**, sin pedir nada ni esperar. Con la
-sesión abierta en el navegador, abre esto y guarda la página:
+sesión abierta, abre esto y guárdala con `Ctrl+S` (basta con *Solo HTML*):
 
-    https://steamcommunity.com/my/games?tab=all&xml=1
-
-Sale un XML con cada juego y sus horas. Lo guardas donde sea y:
+    https://steamcommunity.com/my/games?tab=all
 
 ```bash
-scripts/importar.py steam ~/Descargas/juegos.xml
+scripts/importar.py steam ~/Descargas/juegos.html
 ```
 
-Ese `&xml=1` redirige al login si no hay sesión, que es justo por lo que hay que
-guardarlo desde el navegador y no puede bajarlo el script. Si por lo que sea no
-te da el XML, guarda la página normal (sin `&xml=1`) como HTML y pásasela igual:
-la lista viaja dentro del propio HTML, en un atributo `data-profile-gameslist`.
+La lista completa viaja dentro del propio HTML, en un atributo
+`data-profile-gameslist`, con el nombre y los minutos jugados de cada juego.
+
+**Lo que no funciona: `&xml=1`.** Esa vista antigua devolvía un XML limpio, pero
+hoy redirige al login *siempre*, tenga el perfil público o no: lo probé con ocho
+perfiles distintos y los ocho dan 302 hacia `/login/`. Con la sesión abierta lo
+que sale es un bucle de redirecciones y el navegador se planta. El importador
+sigue entendiendo ese XML por si tienes uno viejo guardado, pero no lo busques.
+
+También sirve el volcado por CSV o JSON de cualquier exportador de bibliotecas
+de terceros, siempre que traiga `appid` y nombre.
 
 La otra vía es el export de datos, en `Cuenta` → `Privacidad` → pedir una copia
 de tus datos. Trae lo mismo más las compras y las reseñas, pero tarda días.
