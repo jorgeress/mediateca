@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[brotato.webp]]"
-tags: []
+tags:
+  - acción
+  - casual
+  - indie
+  - rol
 horas: 38
 appid: 1942280
 draft: true

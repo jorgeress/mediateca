@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2000
-autor:
+autor: Achero Mañas
 nota: 10
 estado: terminado
 favorito: false

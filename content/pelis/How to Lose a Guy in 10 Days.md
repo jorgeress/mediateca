@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2003
-autor:
+autor: Donald Petrie
 nota: 10
 estado: terminado
 favorito: false

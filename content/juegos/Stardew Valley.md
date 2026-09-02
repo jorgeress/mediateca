@@ -6,7 +6,10 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[stardew-valley.webp]]"
-tags: []
+tags:
+  - indie
+  - rol
+  - simuladores
 horas: 142
 appid: 413150
 draft: true

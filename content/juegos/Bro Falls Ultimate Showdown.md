@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[bro-falls-ultimate-showdown.webp]]"
-tags: []
+tags:
+  - acción
+  - casual
+  - free-to-play
+  - indie
 horas: 12
 appid: 1590320
 draft: true

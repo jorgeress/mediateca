@@ -6,7 +6,10 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[adventure-capitalist.webp]]"
-tags: []
+tags:
+  - casual
+  - indie
+  - free-to-play
 horas: 8
 appid: 346900
 draft: true

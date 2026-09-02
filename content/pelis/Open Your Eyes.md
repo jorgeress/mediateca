@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1997
-autor:
+autor: Alejandro Amenábar
 nota: 10
 estado: terminado
 favorito: false

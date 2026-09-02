@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[forager.webp]]"
-tags: []
+tags:
+  - acción
+  - aventura
+  - indie
+  - simuladores
 horas: 30
 appid: 751780
 draft: true

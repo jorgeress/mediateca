@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[project-zomboid.webp]]"
-tags: []
+tags:
+  - indie
+  - rol
+  - simuladores
+  - acceso-anticipado
 horas: 9
 appid: 108600
 draft: true

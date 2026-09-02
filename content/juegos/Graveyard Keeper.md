@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[graveyard-keeper.webp]]"
-tags: []
+tags:
+  - aventura
+  - indie
+  - rol
+  - simuladores
 horas: 15
 appid: 599140
 capsula: cf24c64388ff550c6d35f35643426e66be6aa622/library_capsule.jpg

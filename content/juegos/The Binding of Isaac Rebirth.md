@@ -6,7 +6,8 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[the-binding-of-isaac-rebirth.webp]]"
-tags: []
+tags:
+  - acción
 horas: 361
 appid: 250900
 draft: true

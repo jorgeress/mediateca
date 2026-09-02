@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2019
-autor:
+autor: Greta Gerwig
 nota: 8
 estado: terminado
 favorito: false

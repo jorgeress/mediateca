@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2012
-autor:
+autor: Thomas Vinterberg
 nota: 10
 estado: terminado
 favorito: false

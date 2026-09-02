@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[idle-spiral.webp]]"
-tags: []
+tags:
+  - casual
+  - indie
+  - simuladores
+  - estrategia
 horas: 37
 appid: 1827980
 draft: true

@@ -6,7 +6,9 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[sekirotm-shadows-die-twice.webp]]"
-tags: []
+tags:
+  - acción
+  - aventura
 horas: 68
 appid: 814380
 draft: true

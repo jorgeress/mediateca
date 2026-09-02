@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1957
-autor:
+autor: Sidney Lumet
 nota: 10
 estado: terminado
 favorito: false

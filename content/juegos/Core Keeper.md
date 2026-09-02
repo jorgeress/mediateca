@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[core-keeper.webp]]"
-tags: []
+tags:
+  - acción
+  - aventura
+  - indie
+  - rol
 horas: 44
 appid: 1621690
 capsula: 8e1f05bc29b662fc85a8847457a7d0eed312fbff/library_capsule.jpg

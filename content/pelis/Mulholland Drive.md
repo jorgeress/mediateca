@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2001
-autor:
+autor: David Lynch
 nota: 10
 estado: terminado
 favorito: false

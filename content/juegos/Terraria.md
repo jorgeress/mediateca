@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[terraria.webp]]"
-tags: []
+tags:
+  - acción
+  - aventura
+  - indie
+  - rol
 horas: 343
 appid: 105600
 draft: true

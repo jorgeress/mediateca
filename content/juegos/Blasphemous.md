@@ -6,7 +6,10 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[blasphemous.webp]]"
-tags: []
+tags:
+  - acción
+  - aventura
+  - indie
 horas: 22
 appid: 774361
 draft: true

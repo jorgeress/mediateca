@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2026
-autor:
+autor: Christopher Nolan
 nota: 10
 estado: terminado
 favorito: false

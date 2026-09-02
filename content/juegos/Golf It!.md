@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[golf-it.webp]]"
-tags: []
+tags:
+  - casual
+  - indie
+  - simuladores
+  - deportes
 horas: 21
 appid: 571740
 draft: true

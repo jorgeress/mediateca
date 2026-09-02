@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2015
-autor:
+autor: Jean-Marc Vallée
 nota: 8
 estado: terminado
 favorito: false

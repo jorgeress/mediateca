@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[the-gnorp-apologue.webp]]"
-tags: []
+tags:
+  - casual
+  - indie
+  - simuladores
+  - estrategia
 horas: 25
 appid: 1473350
 draft: true

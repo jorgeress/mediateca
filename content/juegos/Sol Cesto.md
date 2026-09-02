@@ -6,7 +6,9 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[sol-cesto.webp]]"
-tags: []
+tags:
+  - indie
+  - estrategia
 horas: 10
 appid: 2738490
 draft: true

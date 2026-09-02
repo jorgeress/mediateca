@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1985
-autor:
+autor: Jonathan Lynn
 nota: 10
 estado: terminado
 favorito: false

@@ -6,7 +6,9 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[elden-ring.webp]]"
-tags: []
+tags:
+  - acción
+  - rol
 horas: 134
 appid: 1245620
 draft: true

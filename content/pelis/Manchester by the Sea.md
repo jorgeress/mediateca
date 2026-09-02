@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2016
-autor:
+autor: Kenneth Lonergan
 nota: 10
 estado: terminado
 favorito: false

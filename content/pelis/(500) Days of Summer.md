@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2009
-autor:
+autor: Marc Webb
 nota: 10
 estado: terminado
 favorito: false

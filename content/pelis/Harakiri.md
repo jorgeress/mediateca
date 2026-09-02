@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1962
-autor:
+autor: Masaki Kobayashi
 nota: 10
 estado: terminado
 favorito: false

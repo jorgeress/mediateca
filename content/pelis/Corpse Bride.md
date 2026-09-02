@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2005
-autor:
+autor: Mike Johnson, Tim Burton
 nota: 8
 estado: terminado
 favorito: false

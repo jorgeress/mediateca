@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1994
-autor:
+autor: Frank Darabont
 nota: 10
 estado: terminado
 favorito: false

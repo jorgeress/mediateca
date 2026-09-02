@@ -6,7 +6,11 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[tmodloader.webp]]"
-tags: []
+tags:
+  - acción
+  - aventura
+  - indie
+  - rol
 horas: 184
 appid: 1281930
 draft: true

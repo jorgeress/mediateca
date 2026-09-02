@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1999
-autor:
+autor: Gil Junger
 nota: 10
 estado: terminado
 favorito: false

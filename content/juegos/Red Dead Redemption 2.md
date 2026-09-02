@@ -6,7 +6,9 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[red-dead-redemption-2.webp]]"
-tags: []
+tags:
+  - acción
+  - aventura
 horas: 42
 appid: 1174180
 draft: true

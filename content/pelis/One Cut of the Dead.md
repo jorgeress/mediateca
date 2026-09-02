@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2017
-autor:
+autor: "Shin'ichirō Ueda"
 nota: 9
 estado: terminado
 favorito: false

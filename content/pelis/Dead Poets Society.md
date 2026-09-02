@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1989
-autor:
+autor: Peter Weir
 nota: 10
 estado: terminado
 favorito: false

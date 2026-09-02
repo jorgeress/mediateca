@@ -6,7 +6,9 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[slay-the-spire.webp]]"
-tags: []
+tags:
+  - indie
+  - estrategia
 horas: 81
 appid: 646570
 draft: true

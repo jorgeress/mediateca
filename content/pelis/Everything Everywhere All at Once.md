@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2022
-autor:
+autor: Daniel Kwan, Daniel Scheinert
 nota: 10
 estado: terminado
 favorito: false

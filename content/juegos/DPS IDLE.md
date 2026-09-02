@@ -6,7 +6,10 @@ nota:
 estado: en curso
 favorito: false
 portada: "[[dps-idle.webp]]"
-tags: []
+tags:
+  - casual
+  - indie
+  - free-to-play
 horas: 11
 appid: 1349540
 draft: true

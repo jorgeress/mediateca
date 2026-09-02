@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2017
-autor:
+autor: Luca Guadagnino
 nota: 10
 estado: terminado
 favorito: false

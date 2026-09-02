@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1994
-autor:
+autor: Alex Proyas
 nota: 8
 estado: terminado
 favorito: false

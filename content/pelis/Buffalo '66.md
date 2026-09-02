@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 1998
-autor:
+autor: Vincent Gallo
 nota: 10
 estado: terminado
 favorito: false
