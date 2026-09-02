@@ -95,6 +95,7 @@ scripts/
   mediateca.py      lo que comparten los tres scripts
   portadas.py       baja las carátulas y rellena el campo `portada`
   datos.py          completa los campos que la fuente no supo dar
+  vistazo.py        levanta el sitio con los borradores dentro
 quartz/             el generador (fork de Quartz, no se toca)
 quartz.config.yaml  configuración del sitio
 public/             lo que genera el build; no se versiona
@@ -281,6 +282,32 @@ con un degradado y la rejilla no se descuadra.
 Las relaciones de aspecto de cada galería están puestas para lo que enseñan:
 `0.67` (2:3, el formato de un póster o una portada de libro) en juegos,
 películas y libros, y `1` en música y en el *Top*, que es un mosaico cuadrado.
+
+## Verlo antes de ascender
+
+Decidir qué asciendes mirando la web publicada no se puede, porque ahí todavía
+no está: es justo lo que aún no has ascendido. Y mirar ficha por ficha en
+Obsidian tampoco dice cómo va a quedar la galería entera, ni dónde cae el corte
+del *Top*.
+
+```bash
+scripts/vistazo.py               # el sitio completo, borradores incluidos
+scripts/vistazo.py --puerto 9000
+scripts/vistazo.py --solo-build  # construye y no levanta nada
+```
+
+Sale en <http://localhost:8081>, con las fichas en borrador dentro y un aviso
+en la portada para que no lo confundas con el sitio de verdad, que sigue en el
+8080. Puedes tener los dos abiertos a la vez y compararlos.
+
+No toca `quartz.config.yaml` ni la vault: copia el contenido **fuera del
+repositorio**, le quita la línea `draft` a la copia y construye desde ahí. Ni
+cortándolo a mitad puede acabar publicando un borrador. Que la copia salga
+fuera no es capricho: el `glob` de Quartz se salta los directorios que empiezan
+por punto, y además respeta el `.gitignore`, así que una copia dentro del repo
+y anotada ahí no se encontraría a sí misma.
+
+Es una foto fija, no recarga sola: si tocas una ficha, vuelve a lanzarlo.
 
 ## Lo que la fuente no sabe
 
