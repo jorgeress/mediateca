@@ -122,6 +122,13 @@ con `appid` y nombre, y se queda con el mayor tiempo jugado que encuentre.
 Las tres formas las entiende el mismo comando, que mira el contenido y no la
 extensión.
 
+De tu página se guarda además el `appid` de cada juego, y para los recientes la
+ruta de su carátula. Buscar por nombre en Steam falla justo con los
+*free-to-play* y los títulos raros (`skate.`, `PEAK`, `tModLoader`), y con el
+`appid` la carátula sale siempre. Los juegos de 2024 en adelante ya no están en
+la ruta clásica del CDN: la suya cuelga de un hash que solo aparece en tu propia
+página, y por eso se guarda en la ficha.
+
 La vía rápida alternativa sería la clave de la Web API de Steam
 (`GetOwnedGames`), que es instantánea y da lo mismo. Está descartada por
 decisión propia: aquí no se usan APIs con clave.

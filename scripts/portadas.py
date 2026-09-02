@@ -63,20 +63,35 @@ def guardar(datos, destino, cuadrada=False):
 
 # --- fuentes -----------------------------------------------------------------
 
+def caratula_steam(appid, capsula=None):
+    if capsula and "/" in str(capsula):
+        # Ruta con hash: la de los juegos recientes, que ya no estan en la vieja.
+        img = pedir("https://shared.fastly.steamstatic.com/store_item_assets/steam"
+                    f"/apps/{appid}/{capsula}", binario=True)
+        if img and len(img) > 5000:
+            return img
+    for archivo in ("library_600x900_2x.jpg", "library_600x900.jpg", "header.jpg"):
+        img = pedir(f"https://cdn.cloudflare.steamstatic.com/steam/apps/{appid}/{archivo}",
+                    binario=True)
+        if img and len(img) > 5000:
+            return img
+    return None
+
+
 def portada_juego(titulo, campos):
-    del campos
+    if campos.get("appid"):
+        # Importado de tu propia biblioteca: el juego ya esta identificado.
+        # Buscarlo por nombre falla con los free-to-play y con los titulos raros.
+        img = caratula_steam(campos["appid"], campos.get("capsula"))
+        if img:
+            return img, "Steam (exacta, por appid)"
     url = "https://steamcommunity.com/actions/SearchApps/" + urllib.parse.quote(titulo)
     res = pedir(url) or []
     if not res:
         return None, None
     exacto = next((a for a in res if normal(a.get("name")) == normal(titulo)), res[0])
-    appid = exacto["appid"]
-    for archivo in ("library_600x900_2x.jpg", "library_600x900.jpg", "header.jpg"):
-        img = pedir(f"https://cdn.cloudflare.steamstatic.com/steam/apps/{appid}/{archivo}",
-                    binario=True)
-        if img and len(img) > 5000:
-            return img, f"Steam ({exacto['name']})"
-    return None, None
+    img = caratula_steam(exacto["appid"])
+    return (img, f"Steam ({exacto['name']})") if img else (None, None)
 
 
 def portada_libro(titulo, campos):

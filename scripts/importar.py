@@ -192,7 +192,8 @@ def buscar_juegos(dato, hallados):
                 minutos = 0
             previo = hallados.get(str(nombre))
             if previo is None or minutos > previo["minutos"]:
-                hallados[str(nombre)] = {"minutos": minutos}
+                hallados[str(nombre)] = {"minutos": minutos, "appid": int(appid),
+                                         "capsula": dato.get("capsule_filename")}
         for v in dato.values():
             buscar_juegos(v, hallados)
     elif isinstance(dato, list):
@@ -214,18 +215,38 @@ def juegos_de_xml(texto, hallados):
         hallados[nombre] = {"minutos": minutos}
 
 
+JUEGO_SUELTO = re.compile(r'\{[^{}]*?"appid":\s*\d+[^{}]*?\}')
+
+
 def juegos_de_html(texto, hallados):
-    """La misma pagina sin ?xml=1: la lista viaja dentro del propio HTML."""
+    """La pagina del perfil, guardada desde el navegador.
+
+    La lista no esta en el HTML visible sino en un JSON dentro de un <script>,
+    y viene escapada dos veces: una por ser una cadena JSON y otra por ir
+    dentro del propio script. Como el numero de vueltas depende de como la
+    guarde cada navegador, se desescapa poco a poco y se mira en cada vuelta,
+    en vez de dar por buena una forma concreta.
+    """
     for patron in (r'data-profile-gameslist="([^"]*)"', r"var rgGames = (\[.*?\]);"):
         m = re.search(patron, texto, re.S)
-        if not m:
-            continue
-        crudo = html.unescape(m.group(1))
-        try:
-            buscar_juegos(json.loads(crudo), hallados)
-        except json.JSONDecodeError:
-            continue
-        return
+        if m:
+            try:
+                buscar_juegos(json.loads(html.unescape(m.group(1))), hallados)
+                return
+            except json.JSONDecodeError:
+                pass
+
+    variante = texto
+    for _ in range(4):
+        for trozo in JUEGO_SUELTO.findall(variante):
+            try:
+                buscar_juegos(json.loads(trozo), hallados)
+            except json.JSONDecodeError:
+                continue
+        siguiente = variante.replace('\\"', '"').replace("\\/", "/")
+        if siguiente == variante:
+            return
+        variante = siguiente
 
 
 def importar_steam(args):
@@ -246,12 +267,11 @@ def importar_steam(args):
         if len(hallados) > antes:
             leidos.append(nombre)
     if not hallados:
-        print("No he encontrado juegos en esa ruta. Las tres formas que entiende:\n"
-              "  - la página de tu perfil guardada desde el navegador, con la\n"
-              "    sesión abierta: steamcommunity.com/my/games?tab=all&xml=1\n"
-              "  - la misma página sin el &xml=1, guardada como HTML\n"
+        print("No he encontrado juegos en esa ruta. Lo que entiende:\n"
+              "  - steamcommunity.com/my/games?tab=all guardada con Ctrl+S,\n"
+              "    con la sesión abierta\n"
               "  - el zip del export de datos de Steam\n"
-              "Si tienes una y aun así falla, enséñamela y ajusto el rastreo.")
+              "Si tienes una de las dos y aun así falla, enséñamela y lo ajusto.")
         return 1
     print(f"Leído: {', '.join(leidos[:6])}{' ...' if len(leidos) > 6 else ''}")
 
@@ -263,6 +283,8 @@ def importar_steam(args):
             # deducir eso, asi que lo jugado entra como "en curso".
             "estado": "pendiente" if dato["minutos"] == 0 else "en curso",
             "horas": horas or None,
+            "appid": dato.get("appid"),
+            "capsula": dato.get("capsula"),
         }
     return volcar(juegos, "juegos", "juego", args)
 
@@ -447,6 +469,14 @@ def volcar(elementos, carpeta, tipo, args, cribar=True):
             # El identificador del disco en MusicBrainz: con el, la portada se
             # baja exacta y no por parecido de nombre.
             campos["mbid"] = dato["mbid"]
+        if dato.get("appid"):
+            # Lo mismo para los juegos: buscar por nombre falla con los
+            # free-to-play, y con el appid la caratula sale siempre.
+            campos["appid"] = dato["appid"]
+        if dato.get("capsula") and "/" in str(dato["capsula"]):
+            # Los juegos recientes no estan en la ruta clasica del CDN: su
+            # caratula cuelga de un hash que solo aparece en tu propia pagina.
+            campos["capsula"] = dato["capsula"]
         if args.dry_run:
             nuevas += 1
             continue
