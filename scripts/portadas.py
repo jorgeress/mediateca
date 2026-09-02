@@ -17,7 +17,6 @@ Uso:
 """
 
 import argparse
-import difflib
 import re
 import sys
 import time
@@ -27,8 +26,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from mediateca import (PORTADAS, SECCIONES, VAULT, escribir_campos, frontmatter,
-                       normal, pedir, slug)
+from mediateca import (PORTADAS, SECCIONES, VAULT, articulo_html, articulos_ingleses,
+                       escribir_campos, frontmatter, normal, pedir, slug)
 
 ANCHO = 400  # las tarjetas miden 220 px; 400 cubre pantallas 2x
 
@@ -125,97 +124,9 @@ def portada_album(titulo, campos):
     return None, None
 
 
-def wiki(host, params):
-    """Una llamada a la API de MediaWiki, sin apretar: devuelve 429 enseguida."""
-    time.sleep(0.6)
-    return pedir(f"https://{host}.wikipedia.org/w/api.php?format=json&"
-                 + urllib.parse.urlencode(params))
-
-
-PARECIDO_MINIMO = 0.6
-
-
-def encaja(titulo, *candidatos):
-    """Si alguno de esos articulos va de esta pelicula.
-
-    El buscador de Wikipedia siempre devuelve algo, aunque no tenga nada que
-    ver, asi que sin esta comprobacion una ficha se queda con el cartel de otra
-    pelicula. Se compara por parecido y no por igualdad porque los titulos
-    bailan: "Kill Bill Vol. 1" contra "Kill Bill: Volumen 1".
-    """
-    buscado = normal(titulo)
-    if not buscado:
-        return False
-    return any(difflib.SequenceMatcher(None, buscado, normal(c)).ratio() >= PARECIDO_MINIMO
-               for c in candidatos)
-
-
-# Una pelicula famosa suele tener articulo tambien para su banda sonora, su
-# videojuego o la novela de la que sale, y todos se llaman casi igual.
-OTRAS_OBRAS = ("soundtrack", "banda sonora", "album", "video game", "videojuego",
-               "novel", "novela", "series", "serie", "song", "book", "musical",
-               "manga", "anime", "comic", "comic book")
-
-
-def articulos_ingleses(titulo, year):
-    """Articulos en ingles que puedan ser esta pelicula, del mas parecido al menos.
-
-    La Wikipedia en espanol no admite material con copyright, asi que las
-    caratulas solo viven en la inglesa. Se busca por los dos lados: directo en
-    la inglesa, que es donde caen las fichas con el titulo original, y en la
-    española saltando por los enlaces de idioma, que es lo que resuelve las que
-    tienen el titulo traducido.
-    """
-    candidatos = []
-
-    directa = wiki("en", {"action": "query", "list": "search", "srlimit": 5,
-                          "srsearch": f"{titulo} {year or ''} film".strip()})
-    for resultado in (directa or {}).get("query", {}).get("search", []):
-        if encaja(titulo, resultado["title"]):
-            candidatos.append(resultado["title"])
-
-    busqueda = wiki("es", {"action": "query", "list": "search", "srlimit": 5,
-                           "srsearch": f"{titulo} {year or ''} pelicula".strip()})
-    for resultado in (busqueda or {}).get("query", {}).get("search", []):
-        enlaces = wiki("es", {"action": "query", "prop": "langlinks", "lllang": "en",
-                              "redirects": 1, "titles": resultado["title"]})
-        pagina = list((enlaces or {}).get("query", {}).get("pages", {}).values())
-        for idioma in (pagina[0].get("langlinks") if pagina else None) or []:
-            if encaja(titulo, resultado["title"], idioma["*"]):
-                candidatos.append(idioma["*"])
-
-    buscado = normal(titulo)
-    limpios = [c for c in dict.fromkeys(candidatos)
-               if not any(marca in c.lower() for marca in OTRAS_OBRAS
-                          if marca not in titulo.lower())]
-
-    def orden(candidato):
-        """Primero el que se declara pelicula, y ademas del año que toca.
-
-        Ordenar solo por parecido premia el titulo pelado, que suele ser la
-        obra mas famosa y casi nunca la pelicula: "Little Women" a secas es la
-        novela de 1868, y la pelicula es "Little Women (2019 film)".
-        """
-        bajo = candidato.lower()
-        marca = re.search(r"\((\d{4})[^)]*\)", bajo)
-        suyo = marca.group(1) if marca else None
-        if year and suyo == str(year):
-            grupo = 0  # se declara pelicula, y del año de la ficha
-        elif year and suyo and suyo != str(year):
-            grupo = 3  # otra version: el remake de 1997 no es la de 1957
-        elif "film)" in bajo or "película" in bajo or "pelicula" in bajo:
-            grupo = 1
-        else:
-            grupo = 2
-        return grupo, -difflib.SequenceMatcher(None, buscado, normal(candidato)).ratio()
-
-    return sorted(limpios, key=orden)
-
 
 def imagen_infobox(articulo):
-    datos = wiki("en", {"action": "parse", "prop": "text", "section": 0,
-                        "redirects": 1, "page": articulo})
-    html = (datos or {}).get("parse", {}).get("text", {}).get("*", "")
+    html = articulo_html(articulo)
     m = re.search(r'class="[^"]*infobox-image[^"]*".*?<img[^>]+src="([^"]+)"', html, re.S)
     if not m:
         return None
