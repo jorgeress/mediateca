@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[the-perks-of-being-a-wallflower.webp]]"
 tags: []
-draft: true
 ---
 

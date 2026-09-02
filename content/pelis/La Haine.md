@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[la-haine.webp]]"
 tags: []
-draft: true
 ---
 

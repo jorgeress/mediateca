@@ -10,6 +10,5 @@ tags:
   - acción
 horas: 38
 appid: 570940
-draft: true
 ---
 

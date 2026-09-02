@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[the-seventh-seal.webp]]"
 tags: []
-draft: true
 ---
 

@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[the-shawshank-redemption.webp]]"
 tags: []
-draft: true
 ---
 

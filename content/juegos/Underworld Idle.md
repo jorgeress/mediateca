@@ -12,6 +12,5 @@ tags:
   - free-to-play
 horas: 49
 appid: 1540960
-draft: true
 ---
 

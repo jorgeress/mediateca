@@ -13,6 +13,5 @@ tags:
   - acceso-anticipado
 horas: 48
 appid: 1966720
-draft: true
 ---
 

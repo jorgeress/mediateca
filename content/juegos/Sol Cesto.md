@@ -11,6 +11,5 @@ tags:
   - estrategia
 horas: 10
 appid: 2738490
-draft: true
 ---
 

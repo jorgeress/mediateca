@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[inglourious-basterds.webp]]"
 tags: []
-draft: true
 ---
 

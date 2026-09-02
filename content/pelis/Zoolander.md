@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[zoolander.webp]]"
 tags: []
-draft: true
 ---
 

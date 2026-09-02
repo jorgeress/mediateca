@@ -13,6 +13,5 @@ tags:
   - multijugador-masivo
 horas: 22
 appid: 1097150
-draft: true
 ---
 

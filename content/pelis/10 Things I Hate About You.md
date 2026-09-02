@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[10-things-i-hate-about-you.webp]]"
 tags: []
-draft: true
 ---
 

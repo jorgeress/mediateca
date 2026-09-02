@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[everything-everywhere-all-at-once.webp]]"
 tags: []
-draft: true
 ---
 

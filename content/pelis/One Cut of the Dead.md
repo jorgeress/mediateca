@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[one-cut-of-the-dead.webp]]"
 tags: []
-draft: true
 ---
 

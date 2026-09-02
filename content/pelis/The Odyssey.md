@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[the-odyssey.webp]]"
 tags: []
-draft: true
 ---
 

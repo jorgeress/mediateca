@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[dead-poets-society.webp]]"
 tags: []
-draft: true
 ---
 

@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[spirited-away.webp]]"
 tags: []
-draft: true
 ---
 

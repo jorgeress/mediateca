@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[mysterious-skin.webp]]"
 tags: []
-draft: true
 ---
 

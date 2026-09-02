@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[manchester-by-the-sea.webp]]"
 tags: []
-draft: true
 ---
 

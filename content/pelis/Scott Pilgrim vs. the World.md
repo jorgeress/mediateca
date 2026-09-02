@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[scott-pilgrim-vs-the-world.webp]]"
 tags: []
-draft: true
 ---
 

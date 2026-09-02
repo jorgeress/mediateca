@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[call-me-by-your-name.webp]]"
 tags: []
-draft: true
 ---
 

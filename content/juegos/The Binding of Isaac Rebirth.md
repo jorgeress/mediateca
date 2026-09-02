@@ -10,6 +10,5 @@ tags:
   - acción
 horas: 361
 appid: 250900
-draft: true
 ---
 

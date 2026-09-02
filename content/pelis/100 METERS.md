@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada:
 tags: []
-draft: true
 ---
 

@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[12-angry-men.webp]]"
 tags: []
-draft: true
 ---
 

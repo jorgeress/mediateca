@@ -11,6 +11,5 @@ tags:
   - rol
 horas: 134
 appid: 1245620
-draft: true
 ---
 

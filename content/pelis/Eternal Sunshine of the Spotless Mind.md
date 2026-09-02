@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[eternal-sunshine-of-the-spotless-mind.webp]]"
 tags: []
-draft: true
 ---
 

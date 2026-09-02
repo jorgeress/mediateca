@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[project-hail-mary.webp]]"
 tags: []
-draft: true
 ---
 

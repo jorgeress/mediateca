@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[howl-s-moving-castle.webp]]"
 tags: []
-draft: true
 ---
 

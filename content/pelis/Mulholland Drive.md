@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[mulholland-drive.webp]]"
 tags: []
-draft: true
 ---
 

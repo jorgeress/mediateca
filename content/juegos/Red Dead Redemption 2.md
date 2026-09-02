@@ -11,6 +11,5 @@ tags:
   - aventura
 horas: 42
 appid: 1174180
-draft: true
 ---
 

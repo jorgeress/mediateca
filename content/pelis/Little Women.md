@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[little-women.webp]]"
 tags: []
-draft: true
 ---
 

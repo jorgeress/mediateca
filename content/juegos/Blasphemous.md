@@ -12,6 +12,5 @@ tags:
   - indie
 horas: 22
 appid: 774361
-draft: true
 ---
 

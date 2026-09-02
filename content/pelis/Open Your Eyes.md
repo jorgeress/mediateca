@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[open-your-eyes.webp]]"
 tags: []
-draft: true
 ---
 

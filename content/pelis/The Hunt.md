@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[the-hunt.webp]]"
 tags: []
-draft: true
 ---
 

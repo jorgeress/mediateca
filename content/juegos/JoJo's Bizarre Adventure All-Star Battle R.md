@@ -10,6 +10,5 @@ tags:
   - acción
 horas: 11
 appid: 1372110
-draft: true
 ---
 

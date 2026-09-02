@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[corpse-bride.webp]]"
 tags: []
-draft: true
 ---
 

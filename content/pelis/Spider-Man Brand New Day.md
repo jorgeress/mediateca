@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[spider-man-brand-new-day.webp]]"
 tags: []
-draft: true
 ---
 

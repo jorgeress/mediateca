@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[500-days-of-summer.webp]]"
 tags: []
-draft: true
 ---
 

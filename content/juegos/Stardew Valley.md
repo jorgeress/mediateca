@@ -12,6 +12,5 @@ tags:
   - simuladores
 horas: 142
 appid: 413150
-draft: true
 ---
 

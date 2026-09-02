@@ -14,6 +14,5 @@ tags:
 horas: 15
 appid: 599140
 capsula: cf24c64388ff550c6d35f35643426e66be6aa622/library_capsule.jpg
-draft: true
 ---
 

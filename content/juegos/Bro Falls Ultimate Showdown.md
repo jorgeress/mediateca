@@ -13,6 +13,5 @@ tags:
   - indie
 horas: 12
 appid: 1590320
-draft: true
 ---
 

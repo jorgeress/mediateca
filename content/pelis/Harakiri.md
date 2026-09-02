@@ -7,6 +7,5 @@ estado: terminado
 favorito: false
 portada: "[[harakiri.webp]]"
 tags: []
-draft: true
 ---
 
