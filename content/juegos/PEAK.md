@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2025
+autor: Team PEAK
 nota:
 estado: en curso
 favorito: false

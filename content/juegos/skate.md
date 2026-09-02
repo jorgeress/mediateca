@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2025
+autor: Full Circle
 nota:
 estado: en curso
 favorito: false

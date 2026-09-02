@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2025
+autor: AdHoc Studio
 nota:
 estado: en curso
 favorito: false

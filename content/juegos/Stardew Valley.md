@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2016
+autor: ConcernedApe
 nota:
 estado: en curso
 favorito: false

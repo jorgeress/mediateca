@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2022
+autor: Smilegate RPG
 nota:
 estado: en curso
 favorito: false

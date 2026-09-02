@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2022
+autor: CyberConnect2 Co. Ltd.
 nota:
 estado: en curso
 favorito: false

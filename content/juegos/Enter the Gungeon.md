@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2016
+autor: Dodge Roll
 nota:
 estado: en curso
 favorito: false

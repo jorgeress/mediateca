@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2013
+autor: Digital Extremes
 nota:
 estado: en curso
 favorito: false

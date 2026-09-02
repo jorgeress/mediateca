@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2024
+autor: NetEase Games
 nota:
 estado: en curso
 favorito: false

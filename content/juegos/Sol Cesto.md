@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2026
+autor: Tambouille, Géraud Zucchini
 nota:
 estado: en curso
 favorito: false

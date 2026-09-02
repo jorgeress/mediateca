@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2019
+autor: HopFrog
 nota:
 estado: en curso
 favorito: false

@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2021
+autor: Boros Bros
 nota:
 estado: en curso
 favorito: false

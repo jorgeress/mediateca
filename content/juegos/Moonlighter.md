@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2018
+autor: Digital Sun
 nota:
 estado: en curso
 favorito: false

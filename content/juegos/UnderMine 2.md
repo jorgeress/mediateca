@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2025
+autor: Thorium
 nota:
 estado: en curso
 favorito: false

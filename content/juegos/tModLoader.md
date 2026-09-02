@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2020
+autor: TML Team
 nota:
 estado: en curso
 favorito: false

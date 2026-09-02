@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2011
+autor: Re-Logic
 nota:
 estado: en curso
 favorito: false

@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2023
+autor: Aleksandr Golovkin
 nota:
 estado: en curso
 favorito: false

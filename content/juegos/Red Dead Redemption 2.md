@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2019
+autor: Rockstar Games
 nota:
 estado: en curso
 favorito: false

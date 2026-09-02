@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2021
+autor: YDKR, Semenov Iurii
 nota:
 estado: en curso
 favorito: false

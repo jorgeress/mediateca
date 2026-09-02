@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2014
+autor: Nicalis, Inc., Edmund McMillen
 nota:
 estado: en curso
 favorito: false

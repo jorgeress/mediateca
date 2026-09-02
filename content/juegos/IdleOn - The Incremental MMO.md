@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2025
+autor: Lavaflame2
 nota:
 estado: en curso
 favorito: false

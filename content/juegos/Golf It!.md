@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2023
+autor: Perfuse Entertainment
 nota:
 estado: en curso
 favorito: false

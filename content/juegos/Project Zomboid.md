@@ -1,7 +1,7 @@
 ---
 tipo: juego
-year:
-autor:
+year: 2013
+autor: The Indie Stone
 nota:
 estado: en curso
 favorito: false
