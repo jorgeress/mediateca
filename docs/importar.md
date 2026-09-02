@@ -71,11 +71,12 @@ por qué para no volver a proponerlas:
 | | Películas (Letterboxd) | Juegos (Steam) | Música (Spotify) |
 | --- | --- | --- | --- |
 | Título y año | sí | sí (el año lo pone `datos.py`) | sí |
-| Autoría | **no** trae director | el estudio lo pone `datos.py` | sí, artista |
+| Autoría | el director lo pone `datos.py` | el estudio lo pone `datos.py` | sí, artista |
 | **Tu nota** | **sí**, en estrellas | no | no |
 | Señal de uso | fecha de visionado | horas jugadas | reproducciones |
 | Estado | visto o *watchlist* | jugado o no | no |
 | Portada | no | no | no |
+| Géneros | no | los pone `datos.py` | no |
 
 La conclusión que manda sobre todo lo demás: **solo Letterboxd sabe si algo te
 gustó**. Steam sabe cuánto jugaste y Spotify cuánto escuchaste, que no es lo
@@ -104,7 +105,17 @@ diario con título, año, **tu nota** y la fecha. Menos historial, mismo dato:
 scripts/importar.py letterboxd-rss TU_USUARIO
 ```
 
-Lo que **no** se puede: sacar el director. No está en el export ni en el RSS.
+Lo que **no** trae ninguna de las dos vías es **el director**. No está ni en el
+export ni en el RSS, así que las películas importadas entran con `autor` vacío.
+Lo rellena después `scripts/datos.py`, de la ficha lateral del artículo en
+inglés de Wikipedia, que es el mismo del que ya sale el cartel: la parte cara es
+dar con el artículo correcto, y esa estaba resuelta.
+
+Con la misma cautela, además. Si el artículo no encaja de verdad con la ficha,
+se queda sin director en vez de ponerle el de otra película. En la colección de
+este repo salieron 36 de 37, y la que faltó es el caso que justifica la
+cautela: una película de 2025 cuyo único artículo homónimo en Wikipedia es otra
+distinta, española y de 2016.
 
 ### Juegos
 
@@ -152,12 +163,17 @@ decisión propia: aquí no se usan APIs con clave.
 Lo que **no** se puede: saber si terminaste un juego. Por eso lo jugado entra
 como `en curso` y nunca como `terminado`.
 
-Lo que tampoco trae tu página de juegos es **el año ni el estudio**: solo el
-nombre, el `appid` y los minutos. Eso lo cierra un segundo paso,
+Lo que tampoco trae tu página de juegos es **el año, el estudio ni el género**:
+solo el nombre, el `appid` y los minutos. Eso lo cierra un segundo paso,
 `scripts/datos.py`, que consulta la ficha pública de la tienda
 (`store.steampowered.com/api/appdetails`, sin clave) por ese mismo `appid` y
-escribe `year` y `autor`. Va despacio a propósito, que la tienda corta sobre
-las 200 peticiones cada cinco minutos.
+escribe `year`, `autor` y `tags`. Los géneros vienen ya traducidos, porque la
+ficha se pide con `l=spanish`. Va despacio a propósito, que la tienda corta
+sobre las 200 peticiones cada cinco minutos.
+
+Los tags no son un adorno: son lo que hace que la página de etiquetas deje de
+estar vacía y que el grafo tenga aristas. Sin ellos, dos plugins que Quartz trae
+encendidos no tienen nada que dibujar.
 
 ### Música
 
@@ -286,9 +302,9 @@ scripts/importar.py --dry-run ...                               # sin escribir
 2. **Hoy, lo que no tarda**: `letterboxd-rss TU_USUARIO`, o el export si eres
    Pro. Ya tienes las películas que te gustaron, con su nota puesta.
 3. **`scripts/portadas.py`** y **`scripts/datos.py`**, uno detrás de otro:
-   el primero le pone carátula a todo lo nuevo, el segundo rellena el año y el
-   estudio de los juegos. Los dos se pueden repetir sin miedo, porque solo
-   tocan lo que esté sin resolver.
+   el primero le pone carátula a todo lo nuevo, el segundo rellena el año, el
+   estudio y los géneros de los juegos, y la dirección de las películas. Los dos
+   se pueden repetir sin miedo, porque solo tocan lo que esté sin resolver.
 4. **Asciende a mano** lo que merezca estar: quitar la línea `draft`, poner la
    nota y escribir las dos frases del porqué. Esto es el trabajo de verdad y no
    lo hace ninguna herramienta.

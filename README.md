@@ -94,7 +94,7 @@ scripts/
   importar.py       crea fichas desde Letterboxd, Steam, Spotify y Open Library
   mediateca.py      lo que comparten los tres scripts
   portadas.py       baja las carátulas y rellena el campo `portada`
-  datos.py          completa los campos que la fuente no supo dar
+  datos.py          rellena año, autor y tags desde Steam y Wikipedia
   vistazo.py        levanta el sitio con los borradores dentro
 quartz/             el generador (fork de Quartz, no se toca)
 quartz.config.yaml  configuración del sitio
@@ -362,13 +362,19 @@ Es una foto fija, no recarga sola: si tocas una ficha, vuelve a lanzarlo.
 
 ## Lo que la fuente no sabe
 
-Ninguna de las fuentes de importación lo da todo. Tu página de juegos de Steam
-sabe cuántas horas les has echado, pero no de qué año es cada juego ni quién lo
-hizo, así que lo importado entra con `year` y `autor` en blanco, y sin año la
-galería no se puede ordenar por fecha.
+Ninguna de las fuentes de importación lo da todo, y lo que le falta a cada una
+no es casualidad. Tu página de juegos de Steam sabe cuántas horas les has
+echado, pero no de qué año es el juego, ni quién lo hizo, ni de qué va. El
+diario de Letterboxd sabe tu nota, pero no quién dirige. Así que lo importado
+entra con `year`, `autor` y `tags` en blanco: sin año la galería no se ordena
+por fecha, y sin tags la página de etiquetas y el grafo se quedan vacíos.
 
-Eso lo cierra `scripts/datos.py`, que va a la ficha de la tienda de Steam y
-rellena los dos campos:
+Eso lo cierra `scripts/datos.py`, que sabe dónde está cada cosa:
+
+| Sección | Fuente | Qué rellena |
+| --- | --- | --- |
+| Juegos | Ficha de la tienda de Steam | `year`, `autor` (el estudio) y `tags` (los géneros, ya en español) |
+| Películas | Ficha lateral de Wikipedia | `autor`, o sea la dirección |
 
 ```bash
 scripts/datos.py                    # rellena solo lo que esté vacío
@@ -377,10 +383,17 @@ scripts/datos.py --dry-run          # dice qué pondría, sin tocar nada
 scripts/datos.py content/juegos/Hollow\ Knight.md   # una ficha suelta
 ```
 
-Va por el `appid` que el importador ya dejó guardado en cada ficha, y no por el
-título. Es la misma razón que en las carátulas: buscar «PEAK» o «skate.» por
-nombre en Steam no encuentra nada, y por `appid` sale siempre. En la biblioteca
-de este repo acertó las 44 de 44.
+**La regla es no adivinar.** Los juegos van por el `appid` que el importador ya
+dejó guardado, no por el título: buscar «PEAK» o «skate.» por nombre en Steam no
+encuentra nada, y por `appid` sale siempre. Las películas van por el mismo
+artículo de Wikipedia del que sale el cartel, con la misma comprobación de que
+de verdad encaja. Antes que rellenar una ficha con los datos de otra obra, se
+queda vacía y lo dice.
+
+En la colección de este repo: 44 de 44 juegos, y 36 de 37 películas. La que
+falta es un caso de manual — la ficha es de una película de 2025 y el artículo
+que hay en Wikipedia es otra distinta, del mismo título y de 2016. Se negó a
+mezclarlas, que es exactamente lo que tenía que hacer.
 
 No pisa nada de lo que hayas escrito tú: solo toca los campos que estén
 vacíos, salvo que le pases `--force`, y deja el resto de la cabecera igual, en

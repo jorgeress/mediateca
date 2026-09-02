@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """Rellena los campos que el importador no podia saber.
 
-Ninguna fuente lo da todo. Tu pagina de juegos de Steam sabe cuanto has jugado,
-pero no dice ni de que año es el juego ni quien lo hizo, asi que lo importado
-entra con `year` y `autor` en blanco. Aqui se completan yendo a la ficha de la
-tienda por el `appid` que el importador ya dejo guardado en cada nota, que es
-mas fiable que buscar por titulo: los free-to-play y los nombres raros
-(`skate.`, `PEAK`) no se encuentran por nombre y por appid salen siempre.
+Ninguna fuente lo da todo, y lo que le falta a cada una no es casualidad. Tu
+pagina de juegos de Steam sabe cuanto has jugado pero no de que año es el juego,
+quien lo hizo ni de que va; el diario de Letterboxd sabe tu nota pero no quien
+dirige. Todo eso esta en otro sitio, publico y sin clave, y esto va a buscarlo.
+
+La regla es la misma en las dos secciones: **no adivinar**. Los juegos se
+resuelven por el `appid` que el importador ya guardo, que identifica la obra sin
+lugar a dudas, y las peliculas por el mismo articulo de Wikipedia del que sale
+el cartel, que solo se da por bueno si de verdad encaja. Antes que rellenar una
+ficha con los datos de otra obra, se deja vacia.
 
 Como todo lo demas de la mediateca, no pide clave ni registro.
 
-  juegos  Steam, ficha de la tienda: year y autor
+  juegos  Steam, ficha de la tienda: year, autor y tags
+  pelis   Wikipedia: autor, o sea la direccion
 
 Uso:
   scripts/datos.py                    rellena los campos vacios
@@ -26,16 +31,38 @@ import sys
 import time
 from pathlib import Path
 
-from mediateca import (SECCIONES, VAULT, escribir_campos, frontmatter, pedir)
+from mediateca import (SECCIONES, VAULT, articulo_html, articulos_ingleses,
+                       escribir_campos, frontmatter, pedir)
 
 # La tienda de Steam corta sobre las 200 peticiones cada cinco minutos. Con una
 # biblioteca normal no se llega, pero se va sin prisa por si acaso.
 ESPERA = 1.5
 
+MAX_TAGS = 4  # los generos de Steam vienen del mas general al mas concreto
+
+
+def vacio(valor):
+    """Si el campo esta sin poner. `tags: []` cuenta como vacio; con algo, no."""
+    if valor is None:
+        return True
+    if isinstance(valor, (list, tuple)):
+        return not valor
+    return valor.strip() in ("", "[]", "{}")
+
+
+def etiqueta(texto):
+    """Un genero tal cual viene -> un tag: en minuscula y sin espacios.
+
+    Se dejan los acentos. Son etiquetas que se leen en la ficha y en la pagina
+    de tags, y "accion" al lado de "aventura" canta.
+    """
+    return re.sub(r"\s+", "-", (texto or "").strip().lower())
+
 
 # --- fuentes -----------------------------------------------------------------
 
-def datos_juego(campos):
+def datos_juego(titulo, campos):
+    del titulo  # aqui manda el appid, que identifica el juego sin dudas
     appid = campos.get("appid")
     if not appid:
         return {}, "la ficha no tiene appid; se pone a mano"
@@ -60,13 +87,49 @@ def datos_juego(campos):
     estudios = datos.get("developers") or datos.get("publishers") or []
     if estudios:
         valores["autor"] = ", ".join(estudios[:2])
+    # Los generos vienen ya en español, porque la ficha se pide con l=spanish.
+    generos = [etiqueta(g.get("description")) for g in datos.get("genres") or []]
+    generos = [g for g in generos if g][:MAX_TAGS]
+    if generos:
+        valores["tags"] = generos
     return valores, f"Steam ({datos.get('name') or appid})"
 
 
-# Que sabe rellenar cada seccion, y en que campos. Las demas van a mano: para
-# el director de una pelicula o el autor de un libro no hay una fuente que
-# identifique la obra sin lugar a dudas como hace el appid con los juegos.
-FUENTES = {"juego": (datos_juego, ("year", "autor"))}
+# En la ficha lateral del articulo en ingles, la fila que dice quien dirige.
+DIRECCION_RE = re.compile(r"<th[^>]*>\s*Directed by\s*</th>\s*<td[^>]*>(.*?)</td>",
+                          re.S | re.I)
+
+
+def datos_peli(titulo, campos):
+    """La direccion, de la ficha lateral de Wikipedia.
+
+    Ni el export de Letterboxd ni su RSS traen el director, asi que las
+    peliculas importadas se quedan sin `autor`. Se saca del mismo articulo del
+    que ya sale el cartel, y con la misma busqueda: la parte cara es dar con el
+    articulo correcto, y esa esta resuelta en mediateca.py.
+    """
+    for articulo in articulos_ingleses(titulo, campos.get("year")):
+        m = DIRECCION_RE.search(articulo_html(articulo))
+        if not m:
+            continue
+        # La celda trae enlaces, y con varios directores una lista o <br>. Y a
+        # veces un <style> suelto: quitar solo las etiquetas deja el CSS de
+        # dentro, que se colaba de director en las peliculas con dos.
+        celda = re.sub(r"<(style|script)\b.*?</\1>", " ", m.group(1), flags=re.S | re.I)
+        nombres = [re.sub(r"\[\d+\]", "", n).strip()
+                   for n in re.sub(r"<[^>]+>", "\n", celda).split("\n")]
+        nombres = [n for n in nombres if len(n) > 2 and not re.search(r"[{}:;]", n)][:2]
+        if nombres:
+            return {"autor": ", ".join(nombres)}, f"Wikipedia ({articulo})"
+    return {}, "no encuentro su ficha en Wikipedia"
+
+
+# Que sabe rellenar cada seccion, y en que campos. Los libros no estan porque
+# ya entran completos: `importar.py libro` los crea con año, autor y coverid
+# de la edicion que hayas elegido tu. La musica tampoco, porque ListenBrainz da
+# el artista de una y el genero de un disco no lo dice nadie sin discutirlo.
+FUENTES = {"juego": (datos_juego, ("year", "autor", "tags")),
+           "peli": (datos_peli, ("autor",))}
 
 
 # --- recorrido ---------------------------------------------------------------
@@ -99,32 +162,35 @@ def main():
     for md in fichas(args):
         campos = frontmatter(md.read_text(encoding="utf-8"))
         tipo = campos.get("tipo") or SECCIONES.get(md.parent.name)
-        etiqueta = f"{md.parent.name}/{md.stem}"
+        titulo = campos.get("title") or md.stem
+        nombre = f"{md.parent.name}/{md.stem}"
         if tipo not in FUENTES:
-            print(f"  ?  {etiqueta}: no hay fuente para '{tipo}'; se rellena a mano")
+            print(f"  ?  {nombre}: no hay fuente para '{tipo}'; se rellena a mano")
             fallidas += 1
             continue
 
         fuente, esperados = FUENTES[tipo]
-        faltan = esperados if args.force else [c for c in esperados if not campos.get(c)]
+        faltan = (list(esperados) if args.force
+                  else [c for c in esperados if vacio(campos.get(c))])
         if not faltan:
             saltadas += 1
             continue
         if args.dry_run:
-            print(f"  ·  {etiqueta}: buscaría {', '.join(faltan)}")
+            print(f"  ·  {nombre}: buscaría {', '.join(faltan)}")
             continue
 
-        valores, detalle = fuente(campos)
+        valores, detalle = fuente(titulo, campos)
         # Lo que ya estuviera puesto a mano no se pisa salvo con --force.
         valores = {c: v for c, v in valores.items() if c in faltan}
         if not valores:
-            print(f"  ✗  {etiqueta}: {detalle}")
+            print(f"  ✗  {nombre}: {detalle}")
             fallidas += 1
             continue
 
         escribir_campos(md, valores)
-        puesto = ", ".join(f"{c}: {v}" for c, v in valores.items())
-        print(f"  ✓  {etiqueta}: {puesto}  —  {detalle}")
+        puesto = ", ".join(f"{c}: {', '.join(v) if isinstance(v, list) else v}"
+                           for c, v in valores.items())
+        print(f"  ✓  {nombre}: {puesto}  —  {detalle}")
         hechas += 1
         time.sleep(ESPERA)
 
