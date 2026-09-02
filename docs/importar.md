@@ -56,8 +56,8 @@ por qué para no volver a proponerlas:
 
 | | Películas (Letterboxd) | Juegos (Steam) | Música (Spotify) |
 | --- | --- | --- | --- |
-| Título y año | sí | sí (año no) | sí |
-| Autoría | **no** trae director | no | sí, artista |
+| Título y año | sí | sí (el año lo pone `datos.py`) | sí |
+| Autoría | **no** trae director | el estudio lo pone `datos.py` | sí, artista |
 | **Tu nota** | **sí**, en estrellas | no | no |
 | Señal de uso | fecha de visionado | horas jugadas | reproducciones |
 | Estado | visto o *watchlist* | jugado o no | no |
@@ -69,7 +69,9 @@ mismo. Por eso lo que sale de un volcado es un punto de partida, nunca el
 resultado: la nota y las dos frases del porqué las pones tú.
 
 Las carátulas no vienen de ninguna de las tres. Se bajan aparte, con
-`scripts/portadas.py`, de fuentes sin clave.
+`scripts/portadas.py`, de fuentes sin clave. Y lo que Steam no cuenta de sus
+propios juegos, el año y el estudio, lo rellena `scripts/datos.py` yendo a la
+ficha de la tienda por el `appid`. Las dos vías son sin clave y sin registro.
 
 ### Películas
 
@@ -135,6 +137,13 @@ decisión propia: aquí no se usan APIs con clave.
 
 Lo que **no** se puede: saber si terminaste un juego. Por eso lo jugado entra
 como `en curso` y nunca como `terminado`.
+
+Lo que tampoco trae tu página de juegos es **el año ni el estudio**: solo el
+nombre, el `appid` y los minutos. Eso lo cierra un segundo paso,
+`scripts/datos.py`, que consulta la ficha pública de la tienda
+(`store.steampowered.com/api/appdetails`, sin clave) por ese mismo `appid` y
+escribe `year` y `autor`. Va despacio a propósito, que la tienda corta sobre
+las 200 peticiones cada cinco minutos.
 
 ### Música
 
@@ -233,8 +242,10 @@ scripts/importar.py --dry-run ...                               # sin escribir
    la biblioteca y las horas basta con guardar tu página de juegos.
 2. **Hoy, lo que no tarda**: `letterboxd-rss TU_USUARIO`, o el export si eres
    Pro. Ya tienes las películas que te gustaron, con su nota puesta.
-3. **`scripts/portadas.py`**, que le pone carátula a todo lo nuevo de una
-   pasada.
+3. **`scripts/portadas.py`** y **`scripts/datos.py`**, uno detrás de otro:
+   el primero le pone carátula a todo lo nuevo, el segundo rellena el año y el
+   estudio de los juegos. Los dos se pueden repetir sin miedo, porque solo
+   tocan lo que esté sin resolver.
 4. **Asciende a mano** lo que merezca estar: quitar la línea `draft`, poner la
    nota y escribir las dos frases del porqué. Esto es el trabajo de verdad y no
    lo hace ninguna herramienta.
@@ -249,7 +260,9 @@ scripts/importar.py --dry-run ...                               # sin escribir
 
 - Los umbrales, por bandera (`--min-horas`, `--min-nota`, `--completo`).
 - El borrador, con `--sin-borrador` si prefieres que salga publicado ya.
-- Los campos de la ficha se controlan desde `CAMPOS`, en `scripts/importar.py`,
-  y las fuentes de carátula desde `FUENTES`, en `scripts/portadas.py`. Añadir
+- Los campos de la ficha se controlan desde `CAMPOS`, en `scripts/importar.py`;
+  las fuentes de carátula desde `FUENTES`, en `scripts/portadas.py`, y las de
+  relleno desde el `FUENTES` de `scripts/datos.py`, donde cada sección dice qué
+  campos sabe completar. Añadir
   una sección nueva es añadir una entrada en `SECCIONES`, en
   `scripts/mediateca.py`, y un `.base` que la filtre.

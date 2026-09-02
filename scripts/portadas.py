@@ -27,25 +27,10 @@ from pathlib import Path
 
 from PIL import Image
 
-from mediateca import (FRONT_RE, PORTADAS, SECCIONES, VAULT, frontmatter, normal,
-                       pedir, slug)
+from mediateca import (PORTADAS, SECCIONES, VAULT, escribir_campos, frontmatter,
+                       normal, pedir, slug)
 
 ANCHO = 400  # las tarjetas miden 220 px; 400 cubre pantallas 2x
-
-
-def escribir_portada(md, nombre):
-    texto = md.read_text(encoding="utf-8")
-    m = FRONT_RE.match(texto)
-    if not m:
-        return False
-    cabecera = m.group(1)
-    linea = f'portada: "[[{nombre}]]"'
-    if re.search(r"^portada:.*$", cabecera, re.M):
-        nueva = re.sub(r"^portada:.*$", linea, cabecera, count=1, flags=re.M)
-    else:
-        nueva = cabecera + "\n" + linea
-    md.write_text(texto.replace(cabecera, nueva, 1), encoding="utf-8")
-    return True
 
 
 def guardar(datos, destino, cuadrada=False):
@@ -307,7 +292,7 @@ def main():
 
         nombre = f"{slug(titulo)}.webp"
         peso = guardar(img, PORTADAS / nombre)
-        escribir_portada(md, nombre)
+        escribir_campos(md, {"portada": f"[[{nombre}]]"})
         print(f"  ✓  {etiqueta}: {nombre}, {peso // 1024} KB, {fuente}")
         hechas += 1
 

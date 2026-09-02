@@ -35,7 +35,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
-from mediateca import VAULT, nombre_de_fichero, normal, pedir
+from mediateca import VAULT, nombre_de_fichero, normal, pedir, yaml_valor
 
 CAMPOS = ["tipo", "year", "autor", "nota", "estado", "favorito", "portada", "tags"]
 
@@ -48,20 +48,6 @@ MIN_MS = 20 * 60 * 1000  # menos de veinte minutos no es "lo mas escuchado"
 
 def plural(n, singular, plural_):
     return f"{n} {singular if n == 1 else plural_}"
-
-
-def yaml_valor(v):
-    if v is None or v == "":
-        return ""
-    if isinstance(v, str) and v.isdigit():
-        return v
-    if isinstance(v, bool):
-        return "true" if v else "false"
-    if isinstance(v, (int, float)):
-        return str(v)
-    if re.search(r'^[\s>|&*!%@`\[\]{}#-]|[:#]\s|["\']|^\d+$', v):
-        return '"' + v.replace('"', r"\"") + '"'
-    return v
 
 
 def fichas_existentes(carpeta):

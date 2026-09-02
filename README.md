@@ -92,8 +92,9 @@ docs/
   importar.md       qué se puede sacar de cada fuente, y el flujo completo
 scripts/
   importar.py       crea fichas desde Letterboxd, Steam y Spotify
-  mediateca.py      lo que comparten los dos scripts
+  mediateca.py      lo que comparten los tres scripts
   portadas.py       baja las carátulas y rellena el campo `portada`
+  datos.py          completa los campos que la fuente no supo dar
 quartz/             el generador (fork de Quartz, no se toca)
 quartz.config.yaml  configuración del sitio
 public/             lo que genera el build; no se versiona
@@ -165,12 +166,13 @@ scripts/importar.py spotify-export ~/Descargas/spotify.zip   # o desde el zip
 scripts/importar.py --dry-run letterboxd ...   # dice qué haría, sin escribir
 ```
 
-**Todo entra en borrador**, con `draft: true`, `nota` vacía y el cuerpo en
-blanco. Quartz no publica lo que lleva `draft`, así que la web sigue enseñando
-solo lo que hayas ascendido a mano, mientras que en Obsidian se ven todas. Para
-ascender una ficha se le quita la línea `draft` y se le pone nota y las dos
-frases del porqué, que es lo único que estas fuentes no saben. Si prefieres que
-entren publicadas directamente, `--sin-borrador`.
+**Todo entra en borrador**, con `draft: true` y el cuerpo en blanco (la nota sí
+viene puesta en las películas, que es lo único que sabe Letterboxd). Quartz no
+publica lo que lleva `draft`, así que la web sigue enseñando solo lo que hayas
+ascendido a mano, mientras que en Obsidian se ven todas. Para ascender una
+ficha se le quita la línea `draft` y se le pone nota y las dos frases del
+porqué, que es lo único que estas fuentes no saben. Si prefieres que entren
+publicadas directamente, `--sin-borrador`.
 
 Por defecto va en **modo rápido**: solo entra lo que da alguna señal de haberte
 importado, 8 horas jugadas en Steam y 4 estrellas en Letterboxd. Lo que se queda
@@ -198,7 +200,9 @@ del disco, así que la carátula se baja exacta y no por parecido de nombre. Par
 que tenga tus escuchas, se conecta Spotify en sus ajustes o se le sube el
 historial ampliado cuando llegue.
 
-Después de importar, `scripts/portadas.py` le pone carátula a todo lo nuevo.
+Después de importar quedan dos pasos, los dos de una pasada y sin clave:
+`scripts/portadas.py` le pone carátula a todo lo nuevo, y `scripts/datos.py`
+rellena lo que la fuente no supo decir.
 
 **Nada de esto pide pagar, ni registrar una aplicación, ni una clave de API.**
 Fue una decisión, no una casualidad: el export CSV de Letterboxd está detrás de
@@ -278,12 +282,44 @@ Las relaciones de aspecto de cada galería están puestas para lo que enseñan:
 `0.67` (2:3, el formato de un póster o una portada de libro) en juegos,
 películas y libros, y `1` en música y en el *Top*, que es un mosaico cuadrado.
 
+## Lo que la fuente no sabe
+
+Ninguna de las fuentes de importación lo da todo. Tu página de juegos de Steam
+sabe cuántas horas les has echado, pero no de qué año es cada juego ni quién lo
+hizo, así que lo importado entra con `year` y `autor` en blanco, y sin año la
+galería no se puede ordenar por fecha.
+
+Eso lo cierra `scripts/datos.py`, que va a la ficha de la tienda de Steam y
+rellena los dos campos:
+
+```bash
+scripts/datos.py                    # rellena solo lo que esté vacío
+scripts/datos.py --force            # reescribe también lo que ya tenga valor
+scripts/datos.py --dry-run          # dice qué pondría, sin tocar nada
+scripts/datos.py content/juegos/Hollow\ Knight.md   # una ficha suelta
+```
+
+Va por el `appid` que el importador ya dejó guardado en cada ficha, y no por el
+título. Es la misma razón que en las carátulas: buscar «PEAK» o «skate.» por
+nombre en Steam no encuentra nada, y por `appid` sale siempre. En la biblioteca
+de este repo acertó las 44 de 44.
+
+No pisa nada de lo que hayas escrito tú: solo toca los campos que estén
+vacíos, salvo que le pases `--force`, y deja el resto de la cabecera igual, en
+el mismo orden. Se puede repetir tantas veces como quieras; lo que ya está
+resuelto se salta sin gastar una petición.
+
+Para las otras tres secciones sigue siendo a mano. Con los juegos funciona
+porque el `appid` identifica la obra sin lugar a dudas; para el director de una
+película o el autor de un libro no hay un identificador equivalente en la ficha,
+y adivinarlo por título es justo lo que hace que una ficha acabe con los datos
+de otra.
+
 ## Cosas a medias
 
 - El plugin que renderiza las Bases solo trae sus textos en inglés. El único que
   se veía era el contador de resultados, y está oculto por CSS. Si algún día
   aparece otro, habrá que traducirlo a mano.
-- Las fichas que hay ahora son de ejemplo, para que el sitio no se viera vacío.
 - El export de Steam ha cambiado de formato varias veces, así que el importador
   rastrea el JSON entero buscando cosas con `appid` y nombre en vez de dar por
   buena una ruta concreta. Si algún día deja de encontrarlos, es ahí.
