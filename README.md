@@ -159,7 +159,7 @@ para recoger solo lo nuevo, y avisa cuando algo se parece a lo que ya tienes
 ```bash
 scripts/importar.py letterboxd-rss TU_USUARIO  # sin cuenta de pago
 scripts/importar.py letterboxd ~/Descargas/letterboxd-export.zip  # con Pro
-scripts/importar.py steam ~/Descargas/steam-export.zip
+scripts/importar.py steam ~/Descargas/juegos.xml   # tu página de juegos
 scripts/importar.py listenbrainz TU_USUARIO     # discos más escuchados
 scripts/importar.py spotify-export ~/Descargas/spotify.zip   # o desde el zip
 scripts/importar.py --dry-run letterboxd ...   # dice qué haría, sin escribir
@@ -182,7 +182,7 @@ Cada fuente da lo suyo, y ninguna lo da todo:
 | Fuente | Cómo | Qué trae |
 | --- | --- | --- |
 | Letterboxd | El RSS del perfil, o el export si tienes Pro | Título, año y **tu puntuación**, que pasa de estrellas a la escala de 1 a 10. La *watchlist* entra como `pendiente`. |
-| Steam | `Ayuda` → `Datos personales` → descargar | Título y horas jugadas, en el campo `horas`. |
+| Steam | Guardar `steamcommunity.com/my/games?tab=all&xml=1` con la sesión abierta, o el export de datos | Título y horas jugadas, en el campo `horas`. |
 | ListenBrainz | Tu nombre de usuario | Los discos más escuchados, con artista y el *mbid* de MusicBrainz. |
 | Spotify | El zip del export | Lo mismo, desde tu historial. Con `--completo`, los álbumes guardados. |
 

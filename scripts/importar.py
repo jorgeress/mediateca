@@ -3,7 +3,7 @@
 
   letterboxd-rss USUARIO   peliculas: el diario publico del perfil
   letterboxd RUTA          peliculas: el export CSV, si tienes cuenta Pro
-  steam RUTA               juegos: el export de datos de Steam
+  steam RUTA               juegos: la pagina del perfil o el export
   listenbrainz USUARIO     discos: lo mas escuchado, sin clave ninguna
   spotify-export RUTA      discos: lo mismo desde el zip de Spotify
 
@@ -26,6 +26,7 @@ para recoger solo lo nuevo. Despues conviene pasar scripts/portadas.py.
 
 import argparse
 import csv
+import html
 import io
 import json
 import re
@@ -199,18 +200,58 @@ def buscar_juegos(dato, hallados):
             buscar_juegos(v, hallados)
 
 
+def juegos_de_xml(texto, hallados):
+    """La pagina de juegos del perfil con ?xml=1, guardada desde el navegador."""
+    for juego in ElementTree.fromstring(texto).iter("game"):
+        nombre = juego.findtext("name")
+        if not nombre:
+            continue
+        horas = (juego.findtext("hoursOnRecord") or "0").replace(",", "")
+        try:
+            minutos = int(float(horas) * 60)
+        except ValueError:
+            minutos = 0
+        hallados[nombre] = {"minutos": minutos}
+
+
+def juegos_de_html(texto, hallados):
+    """La misma pagina sin ?xml=1: la lista viaja dentro del propio HTML."""
+    for patron in (r'data-profile-gameslist="([^"]*)"', r"var rgGames = (\[.*?\]);"):
+        m = re.search(patron, texto, re.S)
+        if not m:
+            continue
+        crudo = html.unescape(m.group(1))
+        try:
+            buscar_juegos(json.loads(crudo), hallados)
+        except json.JSONDecodeError:
+            continue
+        return
+
+
 def importar_steam(args):
     hallados = {}
     leidos = []
-    for nombre, datos in ficheros(args.ruta, r"\.json$"):
+    for nombre, datos in ficheros(args.ruta, r"\.(json|xml|html?)$"):
+        texto = datos.decode("utf-8", "replace")
+        antes = len(hallados)
         try:
-            buscar_juegos(json.loads(datos.decode("utf-8", "replace")), hallados)
-        except json.JSONDecodeError:
+            if texto.lstrip().startswith("<?xml") or "<gamesList" in texto[:2000]:
+                juegos_de_xml(texto, hallados)
+            elif texto.lstrip().startswith("<"):
+                juegos_de_html(texto, hallados)
+            else:
+                buscar_juegos(json.loads(texto), hallados)
+        except (json.JSONDecodeError, ElementTree.ParseError):
             continue
-        leidos.append(nombre)
+        if len(hallados) > antes:
+            leidos.append(nombre)
     if not hallados:
-        print("No he encontrado juegos en esa ruta. Enséñame qué ficheros trae el\n"
-              "export y ajusto el rastreo: su formato cambia cada dos por tres.")
+        print("No he encontrado juegos en esa ruta. Las tres formas que entiende:\n"
+              "  - la página de tu perfil guardada desde el navegador, con la\n"
+              "    sesión abierta: steamcommunity.com/my/games?tab=all&xml=1\n"
+              "  - la misma página sin el &xml=1, guardada como HTML\n"
+              "  - el zip del export de datos de Steam\n"
+              "Si tienes una y aun así falla, enséñamela y ajusto el rastreo.")
         return 1
     print(f"Leído: {', '.join(leidos[:6])}{' ...' if len(leidos) > 6 else ''}")
 

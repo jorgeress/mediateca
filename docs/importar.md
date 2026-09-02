@@ -35,8 +35,9 @@ aplicación, ni pedir una clave de API. Comprobado en septiembre de 2026:
 | Sección | Vía | Qué hace falta |
 | --- | --- | --- |
 | Películas | RSS del perfil de Letterboxd | tu nombre de usuario |
-| Juegos | Export de datos de Steam | tu cuenta, y esperar unos días |
+| Juegos | Tu página de juegos, guardada del navegador | la sesión abierta |
 | Discos | API de estadísticas de ListenBrainz | tu nombre de usuario |
+| Juegos | Export de datos de Steam | tu cuenta, y esperar unos días |
 | Discos | Export de datos de Spotify | tu cuenta, y esperar |
 
 Se descartaron por el camino dos vías que sí cuestan dinero, y conviene saber
@@ -91,13 +92,30 @@ Lo que **no** se puede: sacar el director. No está en el export ni en el RSS.
 
 ### Juegos
 
-El export está en `Cuenta` → `Privacidad` → pedir una copia de tus datos, y
-trae la biblioteca, las horas, las compras y las reseñas. Tarda días.
+Lo rápido es **tu propia página de juegos**, sin pedir nada ni esperar. Con la
+sesión abierta en el navegador, abre esto y guarda la página:
 
+    https://steamcommunity.com/my/games?tab=all&xml=1
+
+Sale un XML con cada juego y sus horas. Lo guardas donde sea y:
+
+```bash
+scripts/importar.py steam ~/Descargas/juegos.xml
+```
+
+Ese `&xml=1` redirige al login si no hay sesión, que es justo por lo que hay que
+guardarlo desde el navegador y no puede bajarlo el script. Si por lo que sea no
+te da el XML, guarda la página normal (sin `&xml=1`) como HTML y pásasela igual:
+la lista viaja dentro del propio HTML, en un atributo `data-profile-gameslist`.
+
+La otra vía es el export de datos, en `Cuenta` → `Privacidad` → pedir una copia
+de tus datos. Trae lo mismo más las compras y las reseñas, pero tarda días.
 Nadie publica su estructura exacta y ha cambiado varias veces, así que el
 importador no da por buena ninguna ruta: rastrea el JSON entero buscando cosas
-con `appid` y nombre, y se queda con el mayor tiempo jugado que encuentre. Si
-algún día deja de encontrar nada, te lo dice y se ajusta ahí.
+con `appid` y nombre, y se queda con el mayor tiempo jugado que encuentre.
+
+Las tres formas las entiende el mismo comando, que mira el contenido y no la
+extensión.
 
 La vía rápida alternativa sería la clave de la Web API de Steam
 (`GetOwnedGames`), que es instantánea y da lo mismo. Está descartada por
@@ -198,8 +216,9 @@ scripts/importar.py --dry-run ...                               # sin escribir
 
 ## El flujo
 
-1. **Hoy, lo que tarda**: pide el export de Steam y el de Spotify. Uno tarda
-   días y el otro hasta un mes, así que cuanto antes se pidan, mejor.
+1. **Hoy, lo que tarda**: pide el historial ampliado de Spotify, que tarda
+   hasta un mes. El de Steam solo hace falta si quieres compras y reseñas: para
+   la biblioteca y las horas basta con guardar tu página de juegos.
 2. **Hoy, lo que no tarda**: `letterboxd-rss TU_USUARIO`, o el export si eres
    Pro. Ya tienes las películas que te gustaron, con su nota puesta.
 3. **`scripts/portadas.py`**, que le pone carátula a todo lo nuevo de una
