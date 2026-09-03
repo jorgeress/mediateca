@@ -98,6 +98,7 @@ scripts/
   datos.py          rellena año, autor y tags desde Steam y Letterboxd
   vistazo.py        levanta el sitio con los borradores dentro
   estado.py         qué hay, qué falta y qué se publica
+  pruebas.py        las pruebas de todo lo anterior, sin red
 quartz/             el generador (fork de Quartz, no se toca)
 quartz.config.yaml  configuración del sitio
 public/             lo que genera el build; no se versiona
