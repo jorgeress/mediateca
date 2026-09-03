@@ -216,16 +216,13 @@ Spotify en sus ajustes, que empieza a registrar desde ese momento, o subir el
 historial ampliado en `listenbrainz.org/settings/import` cuando te llegue. Si
 acabas de crear la cuenta y aún no hay nada, el script te lo dice.
 
-Están implementadas las dos, porque no todo el mundo quiere crear una app:
+De Spotify solo queda el export, porque la API se quitó entera cuando pasó a
+pedir Premium. El export no necesita ni app ni clave:
 
 ```bash
-scripts/importar.py spotify                      # API: lo más escuchado
-scripts/importar.py spotify --periodo largo      # ventana de varios años
-scripts/importar.py spotify --top 60             # cuántos discos
-scripts/importar.py --completo spotify           # API: lo guardado, sin ranking
-
-scripts/importar.py spotify-export ~/Descargas/spotify.zip              # el zip
-scripts/importar.py --completo spotify-export ~/Descargas/spotify.zip   # guardados
+scripts/importar.py spotify-export ~/Descargas/spotify.zip              # lo más escuchado
+scripts/importar.py --completo spotify-export ~/Descargas/spotify.zip   # los guardados
+scripts/importar.py spotify-export ~/Descargas/spotify.zip --canciones  # tus canciones, en discos
 ```
 
 Spotify no ordena discos, solo canciones, así que **los discos se agregan**: un
@@ -237,6 +234,29 @@ nadie.
 
 Si le pasas el export de la cuenta (el de días, sin álbum), el script te lo dice
 en vez de fallar, y te queda `--completo` para meter lo guardado.
+
+### Tus canciones guardadas, plegadas en discos
+
+`--canciones` lee la clave `tracks` de `YourLibrary.json`, que es donde Spotify
+guarda las canciones que le has dado a me gusta, una a una. Si tienes dos mil,
+dos mil fichas no son la respuesta: no vas a escribir dos mil textos, y las
+carátulas solas serían más de media hora de pausas de MusicBrainz. Así que las
+canciones **se pliegan en el disco que las lleva** y cada disco se queda con la
+cuenta:
+
+```yaml
+favoritas: 8      # ocho canciones tuyas están en este disco
+favorito: true    # ocho es más que el umbral, así que entra como favorito
+```
+
+Ese `favorito` es el único del repo que pone un script en vez de tu mano, y se
+lo permite porque **no lo adivina: lo cuenta**. Un disco con ocho canciones
+tuyas dentro te gusta más que uno con una suelta, y eso es un dato, no una
+suposición. El umbral son tres canciones y se mueve con `--min-favoritas`.
+
+La vista «Por tus canciones» de `content/Musica.base` ordena por esa cuenta, que
+es la mecánica de un Top puesta donde de verdad tiene sentido: en música, que es
+la única sección donde tienes miles de cosas marcadas y ninguna nota.
 
 Lo que **no** se puede en ningún caso: sacar una nota tuya. Spotify no tiene
 puntuaciones.
@@ -292,6 +312,7 @@ primera vez: solo entra lo que da alguna señal de haberte importado.
 | Steam | 8 horas jugadas o más | `--min-horas` |
 | Letterboxd (export y RSS) | 4 estrellas o más | `--min-nota` |
 | ListenBrainz y Spotify | los 40 discos más escuchados | `--top`, `--periodo` |
+| Spotify `--canciones` | 3 canciones tuyas en el disco o más | `--min-favoritas` |
 
 Los discos no pasan por umbral porque ya se seleccionan solos: coger el top 40
 *es* la criba. En el export de Spotify, `--completo` no quita el umbral sino que

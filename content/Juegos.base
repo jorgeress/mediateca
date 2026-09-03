@@ -2,6 +2,8 @@ filters:
   and:
     - note.tipo == "juego"
 properties:
+  file.name:
+    displayName: Título
   note.year:
     displayName: Año
   note.autor:
@@ -15,9 +17,9 @@ views:
     name: Galería
     order:
       - file.name
-      - autor
-      - year
-      - nota
+      - note.autor
+      - note.year
+      - note.nota
     sort:
       - property: nota
         direction: DESC
@@ -28,10 +30,10 @@ views:
     name: Tabla
     order:
       - file.name
-      - autor
-      - year
-      - nota
-      - horas
+      - note.autor
+      - note.year
+      - note.nota
+      - note.horas
     sort:
       - property: nota
         direction: DESC
@@ -44,9 +46,9 @@ views:
         - note.favorito == true
     order:
       - file.name
-      - autor
-      - year
-      - nota
+      - note.autor
+      - note.year
+      - note.nota
     sort:
       - property: nota
         direction: DESC

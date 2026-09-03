@@ -2,6 +2,8 @@ filters:
   and:
     - note.tipo == "album"
 properties:
+  file.name:
+    displayName: Título
   note.year:
     displayName: Año
   note.autor:
@@ -10,14 +12,16 @@ properties:
     displayName: Nota
   note.estado:
     displayName: Estado
+  note.favoritas:
+    displayName: Tus canciones
 views:
   - type: cards
     name: Galería
     order:
       - file.name
-      - autor
-      - year
-      - nota
+      - note.autor
+      - note.year
+      - note.nota
     sort:
       - property: nota
         direction: DESC
@@ -28,10 +32,11 @@ views:
     name: Tabla
     order:
       - file.name
-      - autor
-      - year
-      - nota
-      - estado
+      - note.autor
+      - note.year
+      - note.nota
+      - note.estado
+      - note.favoritas
     sort:
       - property: nota
         direction: DESC
@@ -44,11 +49,26 @@ views:
         - note.favorito == true
     order:
       - file.name
-      - autor
-      - year
-      - nota
+      - note.autor
+      - note.year
+      - note.nota
     sort:
       - property: nota
+        direction: DESC
+    image: note.portada
+    cardSize: 220
+    imageAspectRatio: 1
+  - type: cards
+    name: Por tus canciones
+    filters:
+      and:
+        - note.favoritas > 0
+    order:
+      - file.name
+      - note.autor
+      - note.favoritas
+    sort:
+      - property: favoritas
         direction: DESC
     image: note.portada
     cardSize: 220

@@ -2,6 +2,8 @@ filters:
   and:
     - note.nota >= 9
 properties:
+  file.name:
+    displayName: Título
   note.tipo:
     displayName: Tipo
   note.autor:

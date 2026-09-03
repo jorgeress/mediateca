@@ -179,6 +179,7 @@ scripts/importar.py letterboxd ~/Descargas/letterboxd-export.zip  # con Pro
 scripts/importar.py steam ~/Descargas/juegos.html  # tu página de juegos
 scripts/importar.py listenbrainz TU_USUARIO     # discos más escuchados
 scripts/importar.py spotify-export ~/Descargas/spotify.zip   # o desde el zip
+scripts/importar.py spotify-export ~/Descargas/spotify.zip --canciones  # tus me gusta, en discos
 scripts/importar.py libro "el nombre del viento"  # uno a uno, a mano
 scripts/importar.py --dry-run letterboxd ...   # dice qué haría, sin escribir
 ```
@@ -203,7 +204,7 @@ Cada fuente da lo suyo, y ninguna lo da todo:
 | Letterboxd | El RSS del perfil, o el export si tienes Pro | Título, año y **tu puntuación**, que pasa de estrellas a la escala de 1 a 10. La *watchlist* entra como `pendiente`. |
 | Steam | Guardar `steamcommunity.com/my/games?tab=all` con `Ctrl+S`, o el export de datos | Título y horas jugadas, en el campo `horas`. |
 | ListenBrainz | Tu nombre de usuario | Los discos más escuchados, con artista y el *mbid* de MusicBrainz. |
-| Spotify | El zip del export | Lo mismo, desde tu historial. Con `--completo`, los álbumes guardados. |
+| Spotify | El zip del export | Lo mismo, desde tu historial. Con `--completo`, los álbumes guardados; con `--canciones`, tus me gusta plegados en los discos que los llevan. |
 
 Letterboxd es la única de las tres que sabe si algo te gustó. Steam sabe cuánto
 jugaste, que no es lo mismo (por eso lo jugado entra como `en curso` y no como

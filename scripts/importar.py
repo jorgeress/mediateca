@@ -6,6 +6,7 @@
   steam RUTA               juegos: la pagina del perfil o el export
   listenbrainz USUARIO     discos: lo mas escuchado, sin clave ninguna
   spotify-export RUTA      discos: lo mismo desde el zip de Spotify
+  spotify-export --canciones   tus canciones guardadas, plegadas en discos
   libro TITULO             libros: uno a uno, buscando en Open Library
 
 Las cinco primeras vuelcan de golpe una lista que ya es tuya. Los libros van
@@ -49,6 +50,7 @@ from mediateca import ESTADOS, escribir_ficha, parecidos, pedir
 MIN_HORAS = 8
 MIN_NOTA = 8  # cuatro estrellas de Letterboxd
 MIN_MS = 20 * 60 * 1000  # menos de veinte minutos no es "lo mas escuchado"
+MIN_FAVORITAS = 3  # canciones tuyas en un disco para llamarlo favorito
 
 
 def plural(n, singular, plural_):
@@ -313,6 +315,27 @@ def sacar(fila, *claves):
     return None
 
 
+def canciones_en_discos(contenido, discos):
+    """Pliega tus canciones guardadas en los discos que las llevan.
+
+    Spotify guarda las canciones una a una y en ningun sitio dice que disco te
+    gusta: eso hay que contarlo. Un disco con once canciones tuyas dentro te
+    gusta mas que uno con una, y esa cuenta no es una suposicion, es el dato.
+    Por eso este es el unico sitio del repo donde `favorito` sale de un script
+    y no de tu mano: porque se mide, no se adivina.
+    """
+    for pista in contenido.get("tracks") or []:
+        titulo = sacar(pista, "album", "album_name", "albumName")
+        if not titulo:
+            continue
+        dato = discos.setdefault(titulo, {"favoritas": 0, "autor": None,
+                                          "estado": "terminado"})
+        dato["favoritas"] += 1
+        dato["autor"] = dato["autor"] or sacar(
+            pista, "artist", "artist_name", "artistName")
+    return discos
+
+
 def importar_spotify_export(args):
     """Lee el zip de Spotify sin necesidad de crear ninguna app.
 
@@ -323,6 +346,7 @@ def importar_spotify_export(args):
     permite ordenar por lo mas escuchado de verdad.
     """
     guardados, escuchados, sin_album = {}, {}, 0
+    canciones = {}
     leidos, historial_corto = [], False
     for nombre, datos in ficheros(args.ruta, r"\.json$"):
         try:
@@ -330,8 +354,10 @@ def importar_spotify_export(args):
         except json.JSONDecodeError:
             continue
 
-        if isinstance(contenido, dict) and "albums" in contenido:
-            for album in contenido["albums"] or []:
+        if isinstance(contenido, dict) and ("albums" in contenido
+                                            or "tracks" in contenido):
+            canciones_en_discos(contenido, canciones)
+            for album in contenido.get("albums") or []:
                 titulo = sacar(album, "album", "album_name", "name")
                 if titulo:
                     guardados[titulo] = {"autor": sacar(album, "artist", "artist_name"),
@@ -369,11 +395,28 @@ def importar_spotify_export(args):
               "corto del export de la cuenta, que no lo trae: para ordenar por lo más\n"
               "escuchado hace falta pedir el historial ampliado, que tarda hasta un mes.")
 
+    if args.canciones:
+        if not canciones:
+            print("No he encontrado canciones guardadas en esa ruta. Van en la\n"
+                  "clave tracks de YourLibrary.json, que trae el export de la cuenta.")
+            return 1
+        for dato in canciones.values():
+            dato["favorito"] = dato["favoritas"] >= args.min_favoritas
+        total = sum(d["favoritas"] for d in canciones.values())
+        marcados = sum(1 for d in canciones.values() if d["favorito"])
+        print(f"{plural(total, 'cancion guardada', 'canciones guardadas')} "
+              f"en {plural(len(canciones), 'disco', 'discos')}.")
+        print(plural(marcados, "disco llega", "discos llegan")
+              + f" a {args.min_favoritas} o más y entra"
+              + ("" if marcados == 1 else "n") + " como favorito"
+              + ("" if marcados == 1 else "s") + ".")
+        return volcar(canciones, "musica", "album", args)
+
     if args.completo:
         if not guardados:
             print("No hay YourLibrary.json en esa ruta, que es donde va lo guardado.")
             return 1
-        print(f"{len(guardados)} álbumes guardados.")
+        print(plural(len(guardados), "álbum guardado", "álbumes guardados") + ".")
         return volcar(guardados, "musica", "album", args, cribar=False)
 
     if not escuchados:
@@ -421,6 +464,8 @@ def criba(elementos, args):
     for titulo, dato in elementos.items():
         if dato.get("horas") is not None:
             pasa = dato["horas"] >= args.min_horas
+        elif dato.get("favoritas") is not None:
+            pasa = dato["favoritas"] >= args.min_favoritas
         elif dato.get("nota") is not None:
             pasa = dato["nota"] >= args.min_nota
         else:
@@ -437,9 +482,14 @@ def volcar(elementos, carpeta, tipo, args, cribar=True):
     for titulo, dato in sorted(elementos.items()):
         campos = {"tipo": tipo, "year": dato.get("year"), "autor": dato.get("autor"),
                   "nota": dato.get("nota"), "estado": dato.get("estado", "pendiente"),
-                  "favorito": False, "portada": None, "tags": None}
+                  "favorito": dato.get("favorito", False),
+                  "portada": None, "tags": None}
         if dato.get("horas"):
             campos["horas"] = dato["horas"]
+        if dato.get("favoritas"):
+            # Cuantas de tus canciones guardadas lleva el disco. Es lo que
+            # ordena la vista "Por tus canciones" de Musica.base.
+            campos["favoritas"] = dato["favoritas"]
         if dato.get("mbid"):
             # El identificador del disco en MusicBrainz: con el, la portada se
             # baja exacta y no por parecido de nombre.
@@ -471,6 +521,8 @@ def volcar(elementos, carpeta, tipo, args, cribar=True):
           f"{plural(repetidas, 'ya estaba', 'ya estaban')}.")
     if apartados:
         umbral = (f"menos de {args.min_horas} horas" if carpeta == "juegos"
+                  else f"menos de {args.min_favoritas} canciones tuyas"
+                  if carpeta == "musica"
                   else f"nota por debajo de {args.min_nota}, o ninguna")
         print(plural(len(apartados), "ficha apartada", "fichas apartadas")
               + f" por el modo rápido ({umbral}). Con --completo entran todas.")
@@ -494,6 +546,8 @@ def main():
                    help="sin umbrales: entra todo lo que traiga el export")
     p.add_argument("--min-horas", type=int, default=MIN_HORAS,
                    help=f"juegos: horas mínimas jugadas (por defecto {MIN_HORAS})")
+    p.add_argument("--min-favoritas", type=int, default=MIN_FAVORITAS,
+                   help=f"discos: canciones tuyas mínimas (por defecto {MIN_FAVORITAS})")
     p.add_argument("--min-nota", type=int, default=MIN_NOTA,
                    help=f"películas: nota mínima (por defecto {MIN_NOTA}, o sea 4 estrellas)")
     p.add_argument("--sin-borrador", action="store_true",
@@ -533,6 +587,8 @@ def main():
     se = subs.add_parser("spotify-export", help="lo mismo desde el zip, sin crear app")
     se.add_argument("ruta", help="el .zip del export de Spotify o la carpeta")
     se.add_argument("--top", type=int, default=40, help="cuántos discos (por defecto 40)")
+    se.add_argument("--canciones", action="store_true",
+                    help="pliega tus canciones guardadas en los discos que las llevan")
     se.set_defaults(func=importar_spotify_export)
 
     args = p.parse_args()
