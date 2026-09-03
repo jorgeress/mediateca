@@ -8,8 +8,8 @@ properties:
     displayName: Estudio
   note.nota:
     displayName: Nota
-  note.estado:
-    displayName: Estado
+  note.horas:
+    displayName: Horas
 views:
   - type: cards
     name: Galería
@@ -31,7 +31,7 @@ views:
       - autor
       - year
       - nota
-      - estado
+      - horas
     sort:
       - property: nota
         direction: DESC
