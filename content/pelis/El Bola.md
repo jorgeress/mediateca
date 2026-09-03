@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[el-bola.webp]]"
 tags: []
+letterboxd: pellet-2000
 ---
 

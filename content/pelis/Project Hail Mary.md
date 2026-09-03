@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[project-hail-mary.webp]]"
 tags: []
+letterboxd: project-hail-mary
 ---
 

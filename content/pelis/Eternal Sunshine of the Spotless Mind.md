@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[eternal-sunshine-of-the-spotless-mind.webp]]"
 tags: []
+letterboxd: eternal-sunshine-of-the-spotless-mind
 ---
 

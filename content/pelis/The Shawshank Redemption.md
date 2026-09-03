@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[the-shawshank-redemption.webp]]"
 tags: []
+letterboxd: the-shawshank-redemption
 ---
 

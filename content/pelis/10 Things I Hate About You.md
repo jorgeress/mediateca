@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[10-things-i-hate-about-you.webp]]"
 tags: []
+letterboxd: 10-things-i-hate-about-you
 ---
 

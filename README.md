@@ -91,10 +91,11 @@ content/            la vault de Obsidian: lo único que se escribe a mano
 docs/
   importar.md       qué se puede sacar de cada fuente, y el flujo completo
 scripts/
-  importar.py       crea fichas desde Letterboxd, Steam, Spotify y Open Library
-  mediateca.py      lo que comparten los tres scripts
+  nueva.py          busca una obra suelta y deja la ficha entera
+  importar.py       vuelca de golpe Letterboxd, Steam, Spotify y ListenBrainz
+  mediateca.py      lo que comparten todos los scripts
   portadas.py       baja las carátulas y rellena el campo `portada`
-  datos.py          rellena año, autor y tags desde Steam y Wikipedia
+  datos.py          rellena año, autor y tags desde Steam y Letterboxd
   vistazo.py        levanta el sitio con los borradores dentro
   estado.py         qué hay, qué falta y qué se publica
 quartz/             el generador (fork de Quartz, no se toca)
@@ -147,10 +148,23 @@ pases a público se activa solo, sin tocar nada.
 
 ## Añadir una ficha
 
-Con la plantilla de `_plantillas/Ficha.md` (`Ctrl+P` → *Insertar plantilla*),
-en la carpeta de su sección. En cuanto tenga `tipo` y `nota`, aparece sola en
-la galería, en la tabla y, si llega al 9, en el *Top*. No hay que tocar ningún
-índice.
+Buscándola, que es una línea:
+
+```bash
+scripts/nueva.py juego "hollow knight"
+scripts/nueva.py peli "parasite" --nota 10 --favorito
+scripts/nueva.py album "in rainbows"
+scripts/nueva.py libro "el nombre del viento"
+```
+
+Enseña los candidatos, eliges tú, y deja la ficha entera —año, autor, tags y
+la portada ya bajada—. Está contado en [Añadir una obra
+suelta](#añadir-una-obra-suelta).
+
+A mano también, con la plantilla de `_plantillas/Ficha.md` (`Ctrl+P` →
+*Insertar plantilla*) en la carpeta de su sección. En cuanto tenga `tipo` y
+`nota`, aparece sola en la galería, en la tabla y, si llega al 9, en el *Top*.
+No hay que tocar ningún índice.
 
 ## Traer lo que ya tienes en otros sitios
 
@@ -214,24 +228,46 @@ las dos se cambiaron por vías abiertas. Lo que da y lo que no da cada fuente, y
 qué herramientas de otros hacen ya parte de esto, está en
 [`docs/importar.md`](docs/importar.md).
 
-## Libros: uno a uno, buscando
+## Añadir una obra suelta
 
-Las otras tres secciones se vuelcan de golpe porque la lista ya es tuya y ya
-está elegida: tu diario de Letterboxd, tu biblioteca de Steam, tus escuchas. Con
-los libros no hay nada que volcar. No existe un sitio donde tengas apuntado lo
-que has leído, y si existiera sería otra cuenta más.
-
-Lo que sí hay es un catálogo público, así que la sección va por búsqueda, obra a
-obra:
+Volcar una galería entera se hace una vez. Lo que se hace siempre es añadir la
+película de anoche, el disco de esta semana, el juego que acabas de empezar.
+Eso es `scripts/nueva.py`, y funciona igual para los cuatro tipos:
 
 ```bash
-scripts/importar.py libro "el nombre del viento"
-scripts/importar.py libro "dune" --nota 9 --estado terminado
-scripts/importar.py libro "sapiens" --elegir 2     # sin preguntar
-scripts/importar.py libro "watchmen" --resultados 10
+scripts/nueva.py juego "hollow knight"
+scripts/nueva.py peli "parasite" --nota 10 --favorito
+scripts/nueva.py album "in rainbows" --estado "en curso"
+scripts/nueva.py libro "dune" --nota 9 --estado terminado
+scripts/nueva.py libro "sapiens" --elegir 2     # sin preguntar
+scripts/nueva.py peli "harakiri" --dry-run      # dice qué crearía
 ```
 
-Enseña los resultados y eliges tú:
+Es lo que hace el buscador de Letterboxd o el de Spotify cuando escribes:
+enseñar candidatos con lo justo para distinguirlos, y guardarse **el
+identificador** de lo que elijas en vez del nombre. Cada tipo pregunta a la
+fuente que mejor lo conoce, y ninguna pide clave:
+
+| Tipo | Fuente | Guarda | Y trae |
+| --- | --- | --- | --- |
+| `juego` | Steam | `appid` | año, estudio y géneros |
+| `peli` | Wikidata | `letterboxd` | año y dirección |
+| `album` | MusicBrainz | `mbid` | año y artista |
+| `libro` | Open Library | `coverid` | año y autor |
+
+Con la obra elegida baja la portada en la misma pasada, así que la ficha sale
+completa y no hay que pasar después ni `portadas.py` ni `datos.py`. Lo que la
+fuente no puede saber es lo tuyo, y va en las opciones: `--nota`, `--estado`,
+`--favorito`.
+
+Entra publicada, no en borrador. El borrador existe para triar un volcado de
+cientos de fichas de golpe; si has escrito el título y has elegido de una
+lista, esa criba ya la has hecho. Con `--borrador` entra con `draft: true` como
+las importadas.
+
+El caso que mejor lo explica son los libros, que además es el único donde no
+hay nada que volcar: no existe un sitio donde tengas apuntado lo que has leído,
+y si existiera sería otra cuenta más. Enseña los resultados y eliges tú:
 
 ```
   1) The Name of the Wind — Patrick Rothfuss (2007)
@@ -239,25 +275,36 @@ Enseña los resultados y eliges tú:
   3) El Nombre de la Ballena Coleccion Los Especiales de a la Orilla del V… — …
   4) El origen de los nombres de los países del mundo — Edgardo D. Otero (2003)
 
-¿Cuál? (1-5, Enter para el 1, 0 si ninguno):
+¿Cuál? (1-8, Enter para el 1, 0 si ninguno):
+```
+
+Con una película la lista es la misma y lo que las separa es el año, que es lo
+único que las distingue:
+
+```
+  1) Parasite (2019)
+  2) Parasite (1982)
 ```
 
 **Elegir a mano es el punto, no un trámite.** Open Library devuelve la edición
 inglesa aunque busques en español, y con los títulos cortos se cuela cualquier
-cosa: mira el resultado 3. Quedarse con el primero a ciegas es exactamente lo
-que hace que una ficha acabe con los datos de otro libro.
+cosa: mira el resultado 3. Pasa en las cuatro secciones: en Steam «Portal» saca
+antes el 2 que el 1, y hay tres películas llamadas *Parasite*. Quedarse con el
+primero a ciegas es exactamente lo que hace que una ficha acabe con los datos
+de otra obra.
 
 De la edición que elijas se guarda su `coverid`, igual que el `appid` en los
-juegos y el `mbid` en los discos. Con él, `scripts/portadas.py` baja la portada
-**de esa edición** y no una parecida de nombre.
-
-La ficha entra en borrador como todo lo demás, y con `--nota` y `--estado` puedes
-dejarla puesta de una vez si el libro ya lo has leído.
+juegos, el `mbid` en los discos y el `letterboxd` en las películas. Con él, la
+portada que baja es la **de esa edición** y no una parecida de nombre, y se
+puede rehacer siempre igual.
 
 Es la misma API que usan los plugins de Obsidian que hacen esto, y tampoco pide
 clave ni registro. Está aquí y no en un plugin para que las fichas salgan
 directamente en el formato de la vault, sin un segundo esquema que mantener de
 acuerdo con el primero.
+
+`scripts/importar.py libro "…"` sigue funcionando, con el borrador por defecto
+como el resto del importador: es el mismo alta, llamando aquí.
 
 Sirve igual para cómics y novela gráfica, que Open Library cataloga: *Watchmen*,
 *Maus* y *Persépolis* salen con portada. Hoy entrarían como `tipo: libro`; una
@@ -304,7 +351,7 @@ registro**. Se clona el repositorio y funciona:
 | Juegos | Steam |
 | Libros | Open Library (exacta, si la ficha trae `coverid`) |
 | Música | MusicBrainz + Cover Art Archive |
-| Películas | Wikipedia |
+| Películas | Letterboxd, identificada por Wikidata (Wikipedia de reserva) |
 
 Las películas fueron el caso difícil. Para libros y discos existen catálogos
 abiertos (Open Library es del Internet Archive, Cover Art Archive es de
@@ -314,14 +361,28 @@ formulario que quiere nombre, teléfono y dirección postal, y los servicios que
 no la piden son CDN internos de aplicaciones de terceros, sin términos ni
 garantía de seguir ahí mañana.
 
-La salida es Wikipedia. El script busca la película en la Wikipedia en español,
-salta al artículo en inglés por los enlaces de idioma (la española no admite
-material con copyright, así que las carátulas solo viven en la inglesa) y se
-queda con la imagen de la ficha lateral. La pega es la resolución: Wikipedia
-obliga a que el material no libre esté en baja resolución, así que el póster
-llega a unos 220 px de ancho. Es justo lo que mide la tarjeta, o sea que al
-lado de los demás no se nota, solo se queda algo blando en pantallas de mucha
-densidad. Y es el cartel internacional, no el de la edición española.
+La salida es **Letterboxd**, pero no por su buscador: por el identificador. La
+parte difícil del cine no es bajar el cartel, es saber de qué película. Su
+dirección no se puede deducir del título — `/film/parasite/` es la de Charles
+Band de 1982, y `/film/little-women/` la de 1933 —, así que el id no se adivina
+nunca: lo dice **Wikidata**, que guarda el identificador de Letterboxd (la
+propiedad `P6127`) junto al año de estreno, y que tampoco pide clave. Con ese
+id, la página de la película declara en su `JSON-LD` el cartel y quién dirige,
+en la misma petición. El cartel llega a 1000 px, así que en la tarjeta de 220
+entra nítido incluso en una pantalla de 3x.
+
+El id se apunta en la ficha (`letterboxd: little-women-2019`), igual que el
+`appid` en los juegos o el `mbid` en los discos: se busca una vez y ya no se
+vuelve a buscar. Las importadas del RSS ni eso necesitan, porque el diario ya
+trae el enlace a cada película y el importador lo guarda al vuelo.
+
+**Wikipedia queda de reserva** para lo que Wikidata todavía no sepa
+identificar, que en la práctica son los estrenos futuros. De allí el póster
+llega a unos 220 px, porque obliga a que el material no libre esté en baja
+resolución: es justo lo que mide la tarjeta, o sea que se ve, pero se queda
+blando en pantallas de mucha densidad. De las 37 películas de este repo, 36
+salen de Letterboxd y una — *The Odyssey*, que se estrena en 2026 — sigue en
+Wikipedia hasta que alguien le ponga su `P6127`.
 
 Si una ficha no se encuentra (la búsqueda va por el nombre del fichero), lo más
 rápido es dejar la imagen a mano en `assets/portadas/` y escribir el enlace en
@@ -411,7 +472,7 @@ Eso lo cierra `scripts/datos.py`, que sabe dónde está cada cosa:
 | Sección | Fuente | Qué rellena |
 | --- | --- | --- |
 | Juegos | Ficha de la tienda de Steam | `year`, `autor` (el estudio) y `tags` (los géneros, ya en español) |
-| Películas | Ficha lateral de Wikipedia | `autor`, o sea la dirección |
+| Películas | Ficha de Letterboxd | `autor`, o sea la dirección |
 
 ```bash
 scripts/datos.py                    # rellena solo lo que esté vacío
@@ -423,25 +484,22 @@ scripts/datos.py content/juegos/Hollow\ Knight.md   # una ficha suelta
 **La regla es no adivinar.** Los juegos van por el `appid` que el importador ya
 dejó guardado, no por el título: buscar «PEAK» o «skate.» por nombre en Steam no
 encuentra nada, y por `appid` sale siempre. Las películas van por el mismo
-artículo de Wikipedia del que sale el cartel, con la misma comprobación de que
-de verdad encaja. Antes que rellenar una ficha con los datos de otra obra, se
-queda vacía y lo dice.
+`letterboxd` del que sale el cartel, que Wikidata solo da cuando no queda duda
+de cuál es: si hay dos candidatas del mismo año y nada que las separe, no elige
+ninguna. Antes que rellenar una ficha con los datos de otra obra, se queda
+vacía y lo dice.
 
-En la colección de este repo: 44 de 44 juegos, y 36 de 37 películas. La que
-falta es un caso de manual — la ficha es de una película de 2025 y el artículo
-que hay en Wikipedia es otra distinta, del mismo título y de 2016. Se negó a
-mezclarlas, que es exactamente lo que tenía que hacer.
+En la colección de este repo: 44 de 44 juegos y 37 de 37 películas.
 
 No pisa nada de lo que hayas escrito tú: solo toca los campos que estén
 vacíos, salvo que le pases `--force`, y deja el resto de la cabecera igual, en
 el mismo orden. Se puede repetir tantas veces como quieras; lo que ya está
 resuelto se salta sin gastar una petición.
 
-Para las otras tres secciones sigue siendo a mano. Con los juegos funciona
-porque el `appid` identifica la obra sin lugar a dudas; para el director de una
-película o el autor de un libro no hay un identificador equivalente en la ficha,
-y adivinarlo por título es justo lo que hace que una ficha acabe con los datos
-de otra.
+Para libros y discos sigue siendo a mano. Funciona donde hay un identificador
+que señale la obra sin lugar a dudas — el `appid` de Steam, el `letterboxd` que
+resuelve Wikidata — y no donde hay que adivinar por título, que es justo lo que
+hace que una ficha acabe con los datos de otra.
 
 ## Cosas a medias
 
@@ -462,4 +520,5 @@ El contenido de `content/` es mío, Copyright (c) 2026 jorgeress.
 Las carátulas son de sus respectivos autores y se usan en miniatura para
 identificar cada obra. Vienen de [Open Library](https://openlibrary.org),
 [Cover Art Archive](https://coverartarchive.org),
-[Wikipedia](https://en.wikipedia.org) y Steam.
+[Letterboxd](https://letterboxd.com), [Wikipedia](https://en.wikipedia.org) y
+Steam.

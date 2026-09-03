@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[howl-s-moving-castle.webp]]"
 tags: []
+letterboxd: howls-moving-castle
 ---
 

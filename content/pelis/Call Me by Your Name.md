@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[call-me-by-your-name.webp]]"
 tags: []
+letterboxd: call-me-by-your-name
 ---
 

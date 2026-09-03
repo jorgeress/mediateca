@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[scott-pilgrim-vs-the-world.webp]]"
 tags: []
+letterboxd: scott-pilgrim-vs-the-world
 ---
 

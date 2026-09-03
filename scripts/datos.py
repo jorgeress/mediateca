@@ -8,14 +8,14 @@ dirige. Todo eso esta en otro sitio, publico y sin clave, y esto va a buscarlo.
 
 La regla es la misma en las dos secciones: **no adivinar**. Los juegos se
 resuelven por el `appid` que el importador ya guardo, que identifica la obra sin
-lugar a dudas, y las peliculas por el mismo articulo de Wikipedia del que sale
-el cartel, que solo se da por bueno si de verdad encaja. Antes que rellenar una
-ficha con los datos de otra obra, se deja vacia.
+lugar a dudas, y las peliculas por el mismo id de Letterboxd del que sale
+el cartel, que Wikidata solo da cuando no hay duda de cual es. Antes que
+rellenar una ficha con los datos de otra obra, se deja vacia.
 
 Como todo lo demas de la mediateca, no pide clave ni registro.
 
   juegos  Steam, ficha de la tienda: year, autor y tags
-  pelis   Wikipedia: autor, o sea la direccion
+  pelis   Letterboxd: autor, o sea la direccion
 
 Uso:
   scripts/datos.py                    rellena los campos vacios
@@ -32,7 +32,8 @@ import time
 from pathlib import Path
 
 from mediateca import (SECCIONES, VAULT, articulo_html, articulos_ingleses,
-                       escribir_campos, frontmatter, pedir, vacio)
+                       asegurar_letterboxd, escribir_campos, ficha_letterboxd,
+                       frontmatter, pedir, vacio)
 
 # La tienda de Steam corta sobre las 200 peticiones cada cinco minutos. Con una
 # biblioteca normal no se llega, pero se va sin prisa por si acaso.
@@ -52,7 +53,8 @@ def etiqueta(texto):
 
 # --- fuentes -----------------------------------------------------------------
 
-def datos_juego(titulo, campos):
+def datos_juego(titulo, campos, md):
+    del md
     del titulo  # aqui manda el appid, que identifica el juego sin dudas
     appid = campos.get("appid")
     if not appid:
@@ -91,14 +93,21 @@ DIRECCION_RE = re.compile(r"<th[^>]*>\s*Directed by\s*</th>\s*<td[^>]*>(.*?)</td
                           re.S | re.I)
 
 
-def datos_peli(titulo, campos):
-    """La direccion, de la ficha lateral de Wikipedia.
+def datos_peli(titulo, campos, md):
+    """La direccion, de la ficha de Letterboxd.
 
     Ni el export de Letterboxd ni su RSS traen el director, asi que las
-    peliculas importadas se quedan sin `autor`. Se saca del mismo articulo del
-    que ya sale el cartel, y con la misma busqueda: la parte cara es dar con el
-    articulo correcto, y esa esta resuelta en mediateca.py.
+    peliculas importadas se quedan sin `autor`. Sale de la misma pagina de la
+    que ya sale el cartel y de la misma peticion, asi que llega gratis. Si la
+    pelicula no se ha podido identificar queda Wikipedia, que lo trae en la
+    ficha lateral pero hay que rascarlo del HTML.
     """
+    slug_lb, detalle = asegurar_letterboxd(md, campos)
+    if slug_lb:
+        direccion = ficha_letterboxd(slug_lb).get("direccion")
+        if direccion:
+            return {"autor": ", ".join(direccion[:2])}, f"Letterboxd ({slug_lb})"
+
     for articulo in articulos_ingleses(titulo, campos.get("year")):
         m = DIRECCION_RE.search(articulo_html(articulo))
         if not m:
@@ -112,7 +121,7 @@ def datos_peli(titulo, campos):
         nombres = [n for n in nombres if len(n) > 2 and not re.search(r"[{}:;]", n)][:2]
         if nombres:
             return {"autor": ", ".join(nombres)}, f"Wikipedia ({articulo})"
-    return {}, "no encuentro su ficha en Wikipedia"
+    return {}, (detalle if not slug_lb else "su ficha de Letterboxd no dice quien dirige")
 
 
 # Que sabe rellenar cada seccion, y en que campos. Los libros no estan porque
@@ -170,7 +179,7 @@ def main():
             print(f"  ·  {nombre}: buscaría {', '.join(faltan)}")
             continue
 
-        valores, detalle = fuente(titulo, campos)
+        valores, detalle = fuente(titulo, campos, md)
         # Lo que ya estuviera puesto a mano no se pisa salvo con --force.
         valores = {c: v for c, v in valores.items() if c in faltan}
         if not valores:

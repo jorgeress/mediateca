@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[shutter-island.webp]]"
 tags: []
+letterboxd: shutter-island
 ---
 

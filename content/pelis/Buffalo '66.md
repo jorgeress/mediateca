@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[buffalo-66.webp]]"
 tags: []
+letterboxd: buffalo-66
 ---
 

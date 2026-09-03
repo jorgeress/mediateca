@@ -9,7 +9,9 @@
   libro TITULO             libros: uno a uno, buscando en Open Library
 
 Las cinco primeras vuelcan de golpe una lista que ya es tuya. Los libros van
-aparte porque no hay tal lista: se busca en el catalogo y eliges tu.
+aparte porque no hay tal lista: se busca en el catalogo y eliges tu. Eso ultimo
+sirve igual para las otras tres secciones, asi que vive en scripts/nueva.py y
+`libro` es la misma alta llamando alli.
 
 Ninguna de estas vias pide pagar ni registrar una aplicacion. Se antepone el
 nombre del script: scripts/importar.py letterboxd-rss tu_usuario
@@ -35,14 +37,12 @@ import io
 import json
 import re
 import sys
-import urllib.parse
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
-from mediateca import VAULT, nombre_de_fichero, normal, pedir, yaml_valor
-
-CAMPOS = ["tipo", "year", "autor", "nota", "estado", "favorito", "portada", "tags"]
+import nueva
+from mediateca import ESTADOS, escribir_ficha, parecidos, pedir
 
 # Umbrales del modo rapido. Ninguna fuente sabe si algo te gusto salvo
 # Letterboxd, asi que el resto se criba por la unica senal que dan: el uso.
@@ -53,32 +53,6 @@ MIN_MS = 20 * 60 * 1000  # menos de veinte minutos no es "lo mas escuchado"
 
 def plural(n, singular, plural_):
     return f"{n} {singular if n == 1 else plural_}"
-
-
-def fichas_existentes(carpeta):
-    return {p.stem: normal(p.stem) for p in (VAULT / carpeta).glob("*.md")
-            if p.stem != "index"}
-
-
-def escribir_ficha(carpeta, titulo, campos, cuerpo="", borrador=True):
-    """Deja la ficha en su carpeta. Devuelve None si ya existia."""
-    destino = VAULT / carpeta / f"{nombre_de_fichero(titulo)}.md"
-    if destino.exists():
-        return None
-    # Misma obra escrita distinto ("Parásitos" y "Parasitos"): no se duplica.
-    if normal(titulo) in fichas_existentes(carpeta).values():
-        return None
-    orden = CAMPOS + [c for c in campos if c not in CAMPOS]
-    lineas = [f"{c}: {yaml_valor(campos.get(c))}".rstrip() for c in orden]
-    if campos.get("tags") is None:
-        lineas[orden.index("tags")] = "tags: []"
-    if borrador:
-        # Quartz se salta las notas con draft; Obsidian las sigue enseñando.
-        lineas.append("draft: true")
-    destino.parent.mkdir(parents=True, exist_ok=True)
-    destino.write_text("---\n" + "\n".join(lineas) + "\n---\n\n" + cuerpo,
-                       encoding="utf-8")
-    return destino
 
 
 def ficheros(ruta, patron):
@@ -150,10 +124,15 @@ def importar_letterboxd_rss(args):
             continue  # las listas y las reseñas sueltas no traen pelicula
         nota = entrada.findtext("letterboxd:memberRating", namespaces=espacio)
         año = entrada.findtext("letterboxd:filmYear", namespaces=espacio)
+        # El enlace de la entrada apunta a la pelicula, asi que el diario ya
+        # trae identificada cada una: es de donde sale el cartel, y ahorra
+        # tener que volver a dar con ella por titulo y año.
+        enlace = re.search(r"/film/([^/]+)/", entrada.findtext("link") or "")
         pelis[titulo] = {
             "year": año,
             "estado": "terminado",
             "nota": int(round(float(nota) * 2)) if nota else None,
+            "letterboxd": enlace.group(1) if enlace else None,
         }
 
     if not pelis:
@@ -416,130 +395,23 @@ def importar_spotify_export(args):
 
 # Lo que hace falta para pintar una linea de resultado y para dejar la ficha
 # lista: el cover_i es el identificador de la portada, y con el se baja exacta.
-CAMPOS_OL = ("title,author_name,first_publish_year,cover_i,cover_edition_key,key")
-
-ESTADOS = ["pendiente", "en curso", "terminado", "abandonado"]
-
-
-def buscar_libros(consulta, cuantos):
-    url = (f"https://openlibrary.org/search.json?limit={cuantos}&fields={CAMPOS_OL}"
-           "&q=" + urllib.parse.quote(consulta))
-    return ((pedir(url) or {}).get("docs")) or []
-
-
-def describir(doc):
-    # Los titulos del catalogo traen a veces saltos de linea y sangrias dentro,
-    # que descuadran la lista de resultados.
-    titulo = re.sub(r"\s+", " ", doc.get("title") or "").strip()
-    if len(titulo) > 70:
-        titulo = titulo[:69].rstrip() + "…"
-    autor = (doc.get("author_name") or ["autor desconocido"])[0]
-    year = doc.get("first_publish_year") or "s. f."
-    marca = "" if doc.get("cover_i") else "   (sin portada)"
-    return f"{titulo} — {autor} ({year}){marca}"
-
-
-def preguntar(candidatos):
-    """Elegir a mano es el punto, no un tramite.
-
-    Open Library devuelve la edicion inglesa aunque busques en español ("el
-    nombre del viento" trae "The Name of the Wind"), y con los titulos cortos
-    cuela cualquier cosa. Acertar por el primer resultado es justo lo que hace
-    que una ficha acabe con los datos de otro libro.
-    """
-    for i, doc in enumerate(candidatos, 1):
-        print(f"  {i}) {describir(doc)}")
-    while True:
-        try:
-            resp = input(f"\n¿Cuál? (1-{len(candidatos)}, Enter para el 1, "
-                         "0 si ninguno): ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return None
-        if resp == "":
-            return candidatos[0]
-        if resp == "0":
-            return None
-        if resp.isdigit() and 1 <= int(resp) <= len(candidatos):
-            return candidatos[int(resp) - 1]
-        print("  Eso no es una de las opciones.")
-
-
 def importar_libro(args):
-    """Busca un libro en Open Library y deja la ficha, uno a uno.
+    """Un libro suelto, que es un alta normal de scripts/nueva.py.
 
     Las otras fuentes vuelcan tu biblioteca entera de golpe porque es tuya y ya
     esta elegida. Con los libros no hay biblioteca que volcar: hay un catalogo
-    publico, asi que la eleccion la tienes que hacer tu obra a obra, como en un
-    buscador. Es la misma API que usan los plugins que hacen esto, y tampoco
-    pide clave.
+    publico, asi que la eleccion la haces tu obra a obra, como en un buscador.
+    Eso es exactamente lo que hace nueva.py con los cuatro tipos, asi que aqui
+    solo se traducen las opciones y se llama alli; el nombre se queda por
+    costumbre y porque esta documentado.
     """
-    candidatos = buscar_libros(args.titulo, args.resultados)
-    if not candidatos:
-        print(f"Open Library no encuentra nada con «{args.titulo}».\n"
-              "Prueba con el título en inglés: su catálogo va casi todo por ahí.")
-        return 1
-
-    if args.elegir:
-        if args.elegir > len(candidatos):
-            print(f"Solo hay {len(candidatos)} resultados.")
-            return 1
-        doc = candidatos[args.elegir - 1]
-    elif not sys.stdin.isatty():
-        for i, cand in enumerate(candidatos, 1):
-            print(f"  {i}) {describir(cand)}")
-        print("\nSin terminal para preguntar. Repite con --elegir N.")
-        return 1
-    else:
-        doc = preguntar(candidatos)
-        if doc is None:
-            print("No se ha creado nada.")
-            return 0
-
-    titulo = re.sub(r"\s+", " ", doc.get("title") or args.titulo).strip()
-    campos = {"tipo": "libro", "year": doc.get("first_publish_year"),
-              "autor": (doc.get("author_name") or [None])[0], "nota": args.nota,
-              "estado": args.estado, "favorito": False, "portada": None, "tags": None}
-    if doc.get("cover_i"):
-        # Igual que el appid en los juegos y el mbid en los discos: con el
-        # identificador, portadas.py baja la de esta edicion y no una parecida.
-        campos["coverid"] = doc["cover_i"]
-
-    if args.dry_run:
-        print(f"\nSe crearía content/libros/{nombre_de_fichero(titulo)}.md")
-        return 0
-
-    destino = escribir_ficha("libros", titulo, campos, borrador=not args.sin_borrador)
-    if not destino:
-        print(f"\n«{titulo}» ya estaba en content/libros/.")
-        return 0
-
-    print(f"\nCreada {destino.relative_to(VAULT.parent)}")
-    for aviso in parecidos("libros", [titulo]):
-        print("  Se parece a una que ya tenías: " + aviso)
-    if not args.sin_borrador:
-        print("Entra con draft: true, así que no sale en la web hasta que le quites\n"
-              "la línea. En Obsidian se ve ya.")
-    print("Ahora: scripts/portadas.py")
-    return 0
+    args.tipo = "libro"
+    args.favorito = False
+    args.borrador = not args.sin_borrador
+    return nueva.alta(args)
 
 
 # --- comun -------------------------------------------------------------------
-
-def parecidos(carpeta, titulos):
-    """Titulos que se parecen a una ficha que ya hay, por si son la misma obra.
-
-    No se descartan solos: "Portal" contiene a "Portal 2" y son dos juegos
-    distintos. Se avisa y ya decides tu.
-    """
-    avisos = []
-    for nombre, existente in fichas_existentes(carpeta).items():
-        for titulo in titulos:
-            nuevo = normal(titulo)
-            if nuevo != existente and (nuevo in existente or existente in nuevo):
-                avisos.append(f"{nombre}  <->  {titulo}")
-    return avisos
-
 
 def criba(elementos, args):
     """Aparta lo que no llega al umbral. Devuelve lo que entra y lo que no."""
@@ -572,6 +444,11 @@ def volcar(elementos, carpeta, tipo, args, cribar=True):
             # El identificador del disco en MusicBrainz: con el, la portada se
             # baja exacta y no por parecido de nombre.
             campos["mbid"] = dato["mbid"]
+        if dato.get("letterboxd"):
+            # Y lo mismo para las peliculas: con el id, el cartel sale de
+            # Letterboxd a 1000 px en vez de los 220 a los que lo deja
+            # Wikipedia, y la direccion viene en la misma peticion.
+            campos["letterboxd"] = dato["letterboxd"]
         if dato.get("appid"):
             # Lo mismo para los juegos: buscar por nombre falla con los
             # free-to-play, y con el appid la caratula sale siempre.

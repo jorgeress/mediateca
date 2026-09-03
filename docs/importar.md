@@ -38,8 +38,10 @@ plugin cambie algo se rompe en silencio. Por eso la búsqueda está aquí dentro
 en `importar.py libro`, y no delegada a un plugin.
 
 Para lo demás, sus APIs sí piden clave: OMDb y TMDB para cine, Comic Vine para
-cómics, Boardgame Geek para juegos de mesa. Solo Steam, MusicBrainz, Wikipedia
-y Open Library van sin registro, que son justo las cuatro que usa este repo.
+cómics, Boardgame Geek para juegos de mesa. Van sin registro Steam, MusicBrainz,
+Open Library, Wikipedia y Wikidata, que son justo las que usa este repo. Para
+cine, que es donde todas las APIs piden clave, la salida es identificar la
+película en Wikidata y leer su ficha pública en Letterboxd.
 
 ## ¿Hace falta pagar?
 
@@ -107,15 +109,19 @@ scripts/importar.py letterboxd-rss TU_USUARIO
 
 Lo que **no** trae ninguna de las dos vías es **el director**. No está ni en el
 export ni en el RSS, así que las películas importadas entran con `autor` vacío.
-Lo rellena después `scripts/datos.py`, de la ficha lateral del artículo en
-inglés de Wikipedia, que es el mismo del que ya sale el cartel: la parte cara es
-dar con el artículo correcto, y esa estaba resuelta.
+Lo rellena después `scripts/datos.py`, de la ficha de Letterboxd, que es la
+misma de la que ya sale el cartel: la parte cara es dar con la película, y esa
+estaba resuelta. Sale en la misma petición que el póster, así que el director
+llega gratis.
 
-Con la misma cautela, además. Si el artículo no encaja de verdad con la ficha,
-se queda sin director en vez de ponerle el de otra película. En la colección de
-este repo salieron 36 de 37, y la que faltó es el caso que justifica la
-cautela: una película de 2025 cuyo único artículo homónimo en Wikipedia es otra
-distinta, española y de 2016.
+Lo que el RSS sí trae, y el importador ahora guarda, es **el enlace a cada
+película**: con eso queda identificada desde el minuto uno, sin tener que
+volver a buscarla por título y año. Las que entraron antes de esto, o por el
+CSV, se resuelven por Wikidata la primera vez que pasa un script.
+
+Con la misma cautela, además. Si Wikidata no puede decidir cuál es, se queda
+sin director en vez de ponerle el de otra película. En la colección de este
+repo salieron 37 de 37.
 
 ### Juegos
 
@@ -245,10 +251,15 @@ es el catálogo del Internet Archive y la misma fuente de la que ya salían las
 portadas de libro:
 
 ```bash
-scripts/importar.py libro "el nombre del viento"
-scripts/importar.py libro "dune" --nota 9 --estado terminado
-scripts/importar.py libro "sapiens" --elegir 2   # sin preguntar
+scripts/nueva.py libro "el nombre del viento"
+scripts/nueva.py libro "dune" --nota 9 --estado terminado
+scripts/nueva.py libro "sapiens" --elegir 2   # sin preguntar
 ```
+
+Los libros fueron el primer sitio donde hizo falta, pero la forma sirve para
+las cuatro secciones, así que vive en `scripts/nueva.py` y vale igual para un
+juego, una película o un disco. `scripts/importar.py libro "…"` sigue siendo el
+mismo alta, con el nombre de antes.
 
 Enseña los resultados y eliges tú. **Eso no es un trámite que se pueda saltar**:
 Open Library devuelve la edición inglesa aunque busques en español («el nombre
@@ -259,7 +270,9 @@ que pasa por defecto, y sin terminal para preguntar el script enseña la lista y
 para en vez de inventarse una respuesta.
 
 Se guarda el `coverid` de la edición elegida, así que la portada se baja exacta
-y se puede rehacer siempre igual, igual que con el `appid` y el `mbid`.
+y se puede rehacer siempre igual, igual que con el `appid` de Steam, el `mbid`
+de MusicBrainz y el `letterboxd` de las películas. Y se baja ya, en la misma
+pasada: la ficha sale completa sin tener que llamar después a `portadas.py`.
 
 Lo que **no** se puede: sacar una nota tuya, porque no hay cuenta de la que
 sacarla. Se pone con `--nota` al crearla o a mano después.
@@ -313,8 +326,11 @@ scripts/importar.py --dry-run ...                               # sin escribir
    Si tienes cuenta en ListenBrainz con escuchas, los discos salen en el
    momento y no hace falta esperar a Spotify.
 6. **Más adelante**, si quieres el archivo completo y no solo lo destacado,
-   `--completo`. Los libros no entran por aquí: van uno a uno con
-   `importar.py libro "título"`, cuando te acuerdes de uno.
+   `--completo`.
+7. **Y a partir de ahí, el día a día no es esto.** Volcar una galería se hace
+   una vez; lo que se hace siempre es añadir la película de anoche, con
+   `scripts/nueva.py peli "…"`. Los libros nunca pasan por el volcado: van uno
+   a uno desde el principio.
 
 ## Personalizarlo
 

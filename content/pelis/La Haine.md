@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[la-haine.webp]]"
 tags: []
+letterboxd: la-haine
 ---
 

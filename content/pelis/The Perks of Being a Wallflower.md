@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[the-perks-of-being-a-wallflower.webp]]"
 tags: []
+letterboxd: the-perks-of-being-a-wallflower
 ---
 

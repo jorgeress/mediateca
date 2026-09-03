@@ -6,7 +6,7 @@ Cada seccion tira de la fuente que mejor la conoce:
   juegos  Steam (busqueda publica, sin clave)
   libros  Open Library (sin clave)
   musica  MusicBrainz + Cover Art Archive (sin clave)
-  pelis   Wikipedia (sin clave)
+  pelis   Letterboxd, identificada por Wikidata (sin clave)
 
 Uso:
   scripts/portadas.py                 rellena las fichas sin portada
@@ -27,7 +27,8 @@ from pathlib import Path
 from PIL import Image
 
 from mediateca import (PORTADAS, SECCIONES, VAULT, articulo_html, articulos_ingleses,
-                       escribir_campos, frontmatter, normal, pedir, slug)
+                       asegurar_letterboxd, escribir_campos, ficha_letterboxd,
+                       frontmatter, normal, pedir, slug)
 
 ANCHO = 400  # las tarjetas miden 220 px; 400 cubre pantallas 2x
 
@@ -63,7 +64,8 @@ def caratula_steam(appid, capsula=None):
     return None
 
 
-def portada_juego(titulo, campos):
+def portada_juego(titulo, campos, md):
+    del md
     if campos.get("appid"):
         # Importado de tu propia biblioteca: el juego ya esta identificado.
         # Buscarlo por nombre falla con los free-to-play y con los titulos raros.
@@ -79,7 +81,8 @@ def portada_juego(titulo, campos):
     return (img, f"Steam ({exacto['name']})") if img else (None, None)
 
 
-def portada_libro(titulo, campos):
+def portada_libro(titulo, campos, md):
+    del md
     if campos.get("coverid"):
         # Viene de `importar.py libro`: la edicion ya esta elegida a mano, asi
         # que no hay que volver a adivinarla por titulo.
@@ -102,13 +105,18 @@ def portada_libro(titulo, campos):
     return None, None
 
 
-def portada_album(titulo, campos):
+def portada_album(titulo, campos, md):
+    del md
     if campos.get("mbid"):
-        # Viene de ListenBrainz: el disco ya esta identificado, no hay que buscarlo.
-        img = pedir(f"https://coverartarchive.org/release/{campos['mbid']}/front-500",
-                    binario=True)
-        if img and len(img) > 5000:
-            return img, "Cover Art Archive (exacta, por mbid)"
+        # El disco ya esta identificado, no hay que buscarlo. Se prueban los dos
+        # tipos de identificador porque no todos los `mbid` son lo mismo: el de
+        # ListenBrainz es el de una edicion concreta, y el que guarda nueva.py
+        # es el del disco como obra, que es lo que se apunta en una mediateca.
+        for clase in ("release", "release-group"):
+            img = pedir(f"https://coverartarchive.org/{clase}/{campos['mbid']}/front-500",
+                        binario=True)
+            if img and len(img) > 5000:
+                return img, f"Cover Art Archive (exacta, por mbid de {clase})"
     consulta = f'releasegroup:"{titulo}"'
     if campos.get("autor"):
         consulta += f' AND artist:"{campos["autor"]}"'
@@ -135,13 +143,23 @@ def imagen_infobox(articulo):
     return re.sub(r"/thumb(/.*)/\d+px-[^/]+$", r"\1", src)
 
 
-def portada_peli(titulo, campos):
-    """El poster de la ficha lateral del articulo en ingles.
+def portada_peli(titulo, campos, md):
+    """El cartel de Letterboxd, que es el unico sitio donde esta en condiciones.
 
-    Wikipedia obliga a que el material no libre este en baja resolucion, asi
-    que sale a unos 220 px de ancho: justo lo que mide la tarjeta, nitido en
-    una pantalla normal y algo blando en una de mucha densidad.
+    Wikipedia queda de reserva para lo que Wikidata no sepa identificar. De
+    alli el cartel sale a unos 220 px, porque obliga a que el material con
+    copyright este en baja resolucion: se ve, pero justo.
     """
+    slug_lb, detalle = asegurar_letterboxd(md, campos)
+    if slug_lb:
+        cartel = ficha_letterboxd(slug_lb).get("cartel")
+        if cartel:
+            img = pedir(cartel, binario=True)
+            if img and len(img) > 5000:
+                return img, f"Letterboxd ({slug_lb})"
+    else:
+        print(f"     sin id de Letterboxd: {detalle}")
+
     for articulo in articulos_ingleses(titulo, campos.get("year")):
         src = imagen_infobox(articulo)
         if not src:
@@ -152,7 +170,7 @@ def portada_peli(titulo, campos):
         time.sleep(0.6)
         img = pedir(src, binario=True, reintentos=5)
         if img and len(img) > 5000:
-            return img, f"Wikipedia ({articulo})"
+            return img, f"Wikipedia ({articulo}), en baja resolucion"
     return None, None
 
 
@@ -202,7 +220,7 @@ def main():
             print(f"  ·  {etiqueta}: buscaria en {FUENTES[tipo].__name__}")
             continue
 
-        img, fuente = FUENTES[tipo](titulo, campos)
+        img, fuente = FUENTES[tipo](titulo, campos, md)
         if not img:
             print(f"  ✗  {etiqueta}: sin portada en la fuente")
             fallidas += 1

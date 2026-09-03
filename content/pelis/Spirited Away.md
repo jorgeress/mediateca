@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[spirited-away.webp]]"
 tags: []
+letterboxd: spirited-away
 ---
 

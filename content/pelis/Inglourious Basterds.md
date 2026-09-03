@@ -7,5 +7,6 @@ estado: terminado
 favorito: false
 portada: "[[inglourious-basterds.webp]]"
 tags: []
+letterboxd: inglourious-basterds
 ---
 
