@@ -37,7 +37,9 @@ jobs:
       # Si los scripts se rompen, la vault se llena de fichas mal y eso no lo
       # nota el build: sale verde con las fichas equivocadas dentro.
       - name: Probar los scripts
-        run: python3 scripts/pruebas.py
+        run: |
+          pip install --quiet -r requirements.txt
+          python3 scripts/pruebas.py
 
       - name: Construir el sitio
         run: npx quartz build

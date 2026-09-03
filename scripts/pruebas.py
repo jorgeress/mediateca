@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Las pruebas de los scripts. Sin red y sin dependencias: python3 scripts/pruebas.py
+"""Las pruebas de los scripts, sin red: python3 scripts/pruebas.py
 
 No cubren todo a proposito. Cubren dos cosas: las funciones que deciden si una
 ficha se rellena o se queda vacia, que es donde un fallo es silencioso, y los
@@ -9,6 +9,9 @@ por parecer una tonteria.
 
 Nada de aqui sale a la red. Lo que necesita una respuesta se la da a mano, que
 ademas es la unica forma de probar el caso de la fuente caida.
+
+Hace falta Pillow, como el resto de los scripts: portadas.py lo importa al
+cargarse y de ahi cuelga media cadena de imports. Esta en requirements.txt.
 """
 
 import json

@@ -99,6 +99,7 @@ scripts/
   vistazo.py        levanta el sitio con los borradores dentro
   estado.py         qué hay, qué falta y qué se publica
   pruebas.py        las pruebas de todo lo anterior, sin red
+requirements.txt    Pillow, lo unico que los scripts piden fuera de la estandar
 quartz/             el generador (fork de Quartz, no se toca)
 quartz.config.yaml  configuración del sitio
 public/             lo que genera el build; no se versiona

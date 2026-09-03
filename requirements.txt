@@ -1,0 +1,3 @@
+# Lo unico que los scripts necesitan fuera de la biblioteca estandar. Se usa
+# para recortar y convertir las caratulas en scripts/portadas.py.
+Pillow>=10
