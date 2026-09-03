@@ -18,14 +18,14 @@ jobs:
   construir:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Quartz saca las fechas de creacion y modificacion del historial.
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
 
       # --ignore-scripts evita que sharp intente compilarse desde fuente:
       # los binarios precompilados de @img ya vienen en las dependencias.
@@ -40,10 +40,10 @@ jobs:
       # GitHub Pages no esta disponible en repos privados con el plan
       # gratuito, asi que el despliegue se salta mientras el repo lo sea.
       # En cuanto pase a publico se activa solo, sin tocar nada aqui.
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         if: ${{ !github.event.repository.private }}
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: ${{ !github.event.repository.private }}
         with:
           path: public
@@ -57,4 +57,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
