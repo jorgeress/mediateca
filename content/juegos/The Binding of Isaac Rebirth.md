@@ -2,7 +2,7 @@
 tipo: juego
 year: 2014
 autor: Nicalis, Inc., Edmund McMillen
-nota:
+nota: 10
 estado: en curso
 favorito: false
 portada: "[[the-binding-of-isaac-rebirth.webp]]"

@@ -2,7 +2,7 @@
 tipo: juego
 year: 2013
 autor: Digital Extremes
-nota:
+nota: 10
 estado: en curso
 favorito: false
 portada: "[[warframe.webp]]"

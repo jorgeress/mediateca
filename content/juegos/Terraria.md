@@ -2,7 +2,7 @@
 tipo: juego
 year: 2011
 autor: Re-Logic
-nota:
+nota: 10
 estado: en curso
 favorito: false
 portada: "[[terraria.webp]]"
