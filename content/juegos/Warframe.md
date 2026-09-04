@@ -4,7 +4,7 @@ year: 2013
 autor: Digital Extremes
 nota: 10
 estado: en curso
-favorito: false
+favorito: true
 portada: "[[warframe.webp]]"
 tags:
   - acción

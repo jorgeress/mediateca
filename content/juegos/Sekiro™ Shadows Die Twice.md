@@ -4,7 +4,7 @@ year: 2019
 autor: FromSoftware, Inc.
 nota: 10
 estado: en curso
-favorito: false
+favorito: true
 portada: "[[sekirotm-shadows-die-twice.webp]]"
 tags:
   - acción

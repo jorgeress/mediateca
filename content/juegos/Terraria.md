@@ -4,7 +4,7 @@ year: 2011
 autor: Re-Logic
 nota: 10
 estado: en curso
-favorito: false
+favorito: true
 portada: "[[terraria.webp]]"
 tags:
   - acción

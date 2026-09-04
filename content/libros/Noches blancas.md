@@ -4,7 +4,7 @@ year: 1848
 autor: Fiódor Dostoievski
 nota:
 estado: terminado
-favorito: false
+favorito: true
 portada: "[[noches-blancas.webp]]"
 tags: []
 coverid: 10861094

@@ -4,7 +4,7 @@ year: 2022
 autor: FromSoftware, Inc.
 nota: 10
 estado: en curso
-favorito: false
+favorito: true
 portada: "[[elden-ring.webp]]"
 tags:
   - acción
