@@ -1,7 +1,8 @@
 ---
-title: Lo mejor de todo
+title: Favoritos
 ---
 
-Las cuatro secciones juntas, filtradas a lo que tiene un 9 o un 10.
+Las cuatro secciones juntas, filtradas a lo que he marcado como favorito. Cada
+sección tiene además su propia vista «Solo favoritos», con lo suyo nada más.
 
-![[Top.base]]
+![[Favoritos.base]]

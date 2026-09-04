@@ -1,6 +1,6 @@
 filters:
   and:
-    - note.nota >= 9
+    - note.favorito == true
 properties:
   file.name:
     displayName: Título
@@ -14,7 +14,7 @@ properties:
     displayName: Año
 views:
   - type: cards
-    name: Lo mejor de todo
+    name: Todo junto
     image: note.portada
     cardSize: 200
     imageAspectRatio: 0.67

@@ -13,8 +13,8 @@ crítica: son notas para acordarme de por qué algo me gustó.
 - [[musica/index|Música]]
 
 > [!tip] Atajo
-> [[Top|Lo mejor de todo]] junta las cuatro secciones y deja solo lo que tiene
-> un 9 o un 10.
+> [[Favoritos]] junta las cuatro secciones y deja solo lo que he marcado como
+> favorito. Cada sección tiene también la suya.
 
 ## Cómo está montado
 

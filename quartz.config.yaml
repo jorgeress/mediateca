@@ -117,9 +117,13 @@ plugins:
     options:
       enableSiteMap: true
       enableRSS: true
-      # Las paginas sueltas de los ficheros .base no tienen texto propio:
-      # se embeben en las notas de seccion, asi que fuera del buscador.
-      includeEmptyFiles: false
+      # Las fichas sin texto tambien entran en el buscador: una ficha vacia
+      # sigue teniendo titulo, y quien busca "Elden Ring" espera encontrarla.
+      # El precio son las cinco paginas sueltas de los .base, que entran con
+      # el titulo del fichero y sin texto. No se pueden sacar: el plugin que
+      # las pinta no lee frontmatter, y meter *.base en ignorePatterns deja
+      # sin galeria a las cinco secciones (comprobado).
+      includeEmptyFiles: true
   - source: "@quartz-community/favicon"
     enabled: true
   - source: "@quartz-community/og-image"

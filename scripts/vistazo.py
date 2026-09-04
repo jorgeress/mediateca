@@ -4,7 +4,7 @@
 En la web solo sale lo que has ascendido a mano: Quartz se salta todo lo que
 lleve `draft: true`. Eso esta bien para publicar y fatal para decidir, porque
 justo lo que quieres ver antes de ascender una tanda es como va a quedar la
-galeria con ella dentro, y sobre todo donde cae el corte del Top.
+galeria con ella dentro.
 
 No toca ni `quartz.config.yaml` ni la vault. Copia el contenido fuera del repo,
 le quita la linea `draft` a la copia y construye desde ahi, en su propio

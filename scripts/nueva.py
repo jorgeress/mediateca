@@ -22,7 +22,7 @@ Lo que la fuente no sabe es lo tuyo, y va en las opciones:
 
   --nota 8            del 1 al 10
   --estado "en curso" pendiente, en curso, terminado, abandonado
-  --favorito          la marca como favorita
+  --favorito          la marca como favorita: entra en Favoritos
   --elegir 2          sin preguntar: el resultado numero 2
   --borrador          entra con draft: true, o sea sin salir en la web
   --dry-run           dice que crearia, sin tocar nada
@@ -276,8 +276,8 @@ def alta(args):
         print("Entra con draft: true, así que no sale en la web hasta que le quites\n"
               "la línea. En Obsidian se ve ya.")
     if args.nota is None:
-        print("Sin nota: ponla en Obsidian cuando la tengas, que es lo que\n"
-              "decide si entra en el Top.")
+        print("Sin nota: ponla en Obsidian cuando la tengas, que es por lo que\n"
+              "ordenan las galerías.")
     return 0
 
 

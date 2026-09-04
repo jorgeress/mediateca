@@ -27,16 +27,6 @@ CAMPOS = ("year", "autor", "nota", "portada", "tags")
 # En assets/portadas/ vive tambien el .gitkeep, que no es una caratula huerfana.
 IMAGENES = {".webp", ".jpg", ".jpeg", ".png", ".gif", ".avif"}
 
-CORTE_RE = re.compile(r"note\.nota\s*>=\s*(\d+)")
-
-
-def corte_del_top():
-    """El corte del Top se lee de la Base, que es donde manda."""
-    base = VAULT / "Top.base"
-    m = CORTE_RE.search(base.read_text(encoding="utf-8")) if base.exists() else None
-    return int(m.group(1)) if m else None
-
-
 def leer(carpeta):
     """Cada ficha de la carpeta: sus campos, si es borrador y si tiene texto."""
     for md in sorted((VAULT / carpeta).glob("*.md")):
@@ -70,6 +60,7 @@ def main():
     con_texto = Counter()
     faltan = defaultdict(list)
     notas = Counter()
+    favoritos = Counter()
     portadas_usadas = set()
     rotas = []
 
@@ -87,6 +78,8 @@ def main():
                     faltan[campo].append(f"{carpeta}/{md.stem}")
             if campos.get("nota"):
                 notas[int(campos["nota"])] += 1
+            if campos.get("favorito") == "true":
+                favoritos[carpeta] += 1
             apuntada = re.sub(r"^\[\[|\]\]$", "", campos.get("portada") or "")
             if apuntada:
                 portadas_usadas.add(apuntada)
@@ -127,11 +120,16 @@ def main():
     if notas:
         print("\nNOTAS      " + "  ".join(f"{n}:{c}" for n, c in
                                           sorted(notas.items(), reverse=True)))
-        corte = corte_del_top()
-        if corte is not None:
-            arriba = sum(c for n, c in notas.items() if n >= corte)
-            print(f"  Top.base pide {corte} o más: {arriba} de {sum(notas.values())} "
-                  "fichas con nota entrarían.")
+
+    # Favoritos.base junta las cuatro secciones y cada .base tiene ademas su
+    # vista "Solo favoritos". Si aqui sale 0, esas paginas salen vacias.
+    print(f"\nFAVORITOS  {barra(sum(favoritos.values()), hay)}  "
+          f"{sum(favoritos.values())} de {hay}")
+    for carpeta in carpetas:
+        print(f"  {carpeta:10} {favoritos[carpeta]:>4}")
+    if not sum(favoritos.values()):
+        print("  Ninguna. Favoritos.base y las vistas «Solo favoritos» salen vacías")
+        print("  hasta que alguna ficha lleve `favorito: true`.")
 
     # Solo con la vault entera tiene sentido: con --seccion sobran las de las otras.
     if not args.seccion:
