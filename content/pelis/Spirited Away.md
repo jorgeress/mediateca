@@ -4,7 +4,7 @@ year: 2001
 autor: Hayao Miyazaki
 nota: 10
 estado: terminado
-favorito: false
+favorito: true
 portada: "[[spirited-away.webp]]"
 tags: []
 letterboxd: spirited-away

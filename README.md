@@ -473,9 +473,9 @@ SIN RELLENAR
 
 NOTAS      10:38  9:1  8:4
 
-FAVORITOS  ████····················  15 de 90
+FAVORITOS  ██████··················  21 de 90
   juegos        6
-  pelis         0
+  pelis         6
   libros        3
   musica        6
 ```
