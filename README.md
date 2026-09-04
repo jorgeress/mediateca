@@ -140,12 +140,9 @@ funcionan desde el primer arranque.
 
 1. Haz un *fork* del repo, o clónalo y súbelo al tuyo.
 2. En `quartz.config.yaml`, cambia `baseUrl` por `tuusuario.github.io/mediateca`.
-3. Empuja a `main`. El workflow de `.github/workflows/deploy.yaml` construye y
+3. En `Settings → Pages` del repo, pon *Source* en **GitHub Actions**.
+4. Empuja a `main`. El workflow de `.github/workflows/deploy.yaml` construye y
    despliega solo.
-
-No hay que entrar a `Settings → Pages` a poner *Source* en **GitHub Actions**:
-el paso `configure-pages` lleva `enablement: true` y lo activa él la primera
-vez, con el permiso `pages: write` que ya tiene el workflow.
 
 El workflow se salta el despliegue mientras el repositorio sea privado, porque
 Pages no está disponible en repos privados con el plan gratuito. En cuanto lo
