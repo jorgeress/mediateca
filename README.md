@@ -47,8 +47,8 @@ maquetación ni orden ni el HTML de una tarjeta, solo los datos.
 **Los `.base` son las vistas.** Un `.base` no contiene fichas: contiene la
 *pregunta* («dame todo lo que tenga `tipo: juego`, ordenado por nota, en
 tarjetas de 220 px»). Están sueltos y no dentro de las notas justamente para
-que se puedan cambiar sin tocar ni una ficha: cambiar el criterio del *Top* de
-un 9 a un 8 es editar un fichero, no doscientos. Y como es un formato nativo de
+que se puedan cambiar sin tocar ni una ficha: cambiar el criterio de
+*Favoritos*, o el orden de una galería, es editar un fichero, no noventa. Y como es un formato nativo de
 Obsidian, la misma vista se pinta igual en el editor y en la web; no hay una
 galería para mí y otra para el visitante.
 
@@ -164,9 +164,9 @@ la portada ya bajada—. Está contado en [Añadir una obra
 suelta](#añadir-una-obra-suelta).
 
 A mano también, con la plantilla de `_plantillas/Ficha.md` (`Ctrl+P` →
-*Insertar plantilla*) en la carpeta de su sección. En cuanto tenga `tipo` y
-`nota`, aparece sola en la galería, en la tabla y, si llega al 9, en el *Top*.
-No hay que tocar ningún índice.
+*Insertar plantilla*) en la carpeta de su sección. En cuanto tenga `tipo`
+aparece sola en la galería y en la tabla, y si lleva `favorito: true`, también
+en *Favoritos*. No hay que tocar ningún índice.
 
 ## Traer lo que ya tienes en otros sitios
 
@@ -263,6 +263,39 @@ completa y no hay que pasar después ni `portadas.py` ni `datos.py`. Lo que la
 fuente no puede saber es lo tuyo, y va en las opciones: `--nota`, `--estado`,
 `--favorito`.
 
+### Un disco y tus canciones
+
+De un disco lo que se recuerda no es el disco entero, son tres canciones. Van
+en el cuerpo de la ficha, en una lista, y su **cuenta** en el campo `favoritas`:
+
+```yaml
+---
+tipo: album
+year: 2007
+autor: Radiohead
+favorito: true
+favoritas: 2
+mbid: 6e335887-60ba-38f0-95af-fae7774336bf
+---
+
+Mis canciones de este disco:
+
+- Nude
+- Weird Fishes/Arpeggi
+```
+
+`favoritas` es un número, no una lista, porque de ahí salió: cuando el
+importador pliega las dos mil canciones guardadas de un export de Spotify en
+los discos que las llevan (`importar.py spotify-export … --canciones`), lo
+único que le queda a cada disco es cuántas eran. Escribiéndolas a mano el campo
+significa lo mismo y la vista **«Por tus canciones»** de `Musica.base` ordena
+por él igual. Los nombres van en el cuerpo porque ahí sí los encuentra el
+buscador de la web, que indexa el texto de la ficha y no la cabecera.
+
+Es la única sección donde esto tiene sentido: en música tienes miles de cosas
+marcadas y ninguna nota, así que la cuenta hace el trabajo que en las otras
+secciones hace el 1-10.
+
 Entra publicada, no en borrador. El borrador existe para triar un volcado de
 cientos de fichas de golpe; si has escrito el título y has elegido de una
 lista, esa criba ya la has hecho. Con `--borrador` entra con `draft: true` como
@@ -310,9 +343,12 @@ acuerdo con el primero.
 como el resto del importador: es el mismo alta, llamando aquí.
 
 Sirve igual para cómics y novela gráfica, que Open Library cataloga: *Watchmen*,
-*Maus* y *Persépolis* salen con portada. Hoy entrarían como `tipo: libro`; una
-sección propia sería añadir una entrada en `SECCIONES` y un `.base` que la
-filtre.
+*Maus* y *Persépolis* salen con portada. Entran como `tipo: libro`, y **el manga
+también**: la convención es dejarlo en libros con la etiqueta `manga` en `tags`,
+no darle sección propia. Un `.base` filtra por etiqueta igual de bien que por
+carpeta, así que separarlos sería duplicar una sección entera para no ganar
+nada. El día que haya bastantes, `Libros.base` se lleva una vista «Solo manga»
+que filtre por el tag; hoy no la tiene porque no hay ninguno y saldría vacía.
 
 ## Portadas
 
@@ -397,7 +433,15 @@ con un degradado y la rejilla no se descuadra.
 
 Las relaciones de aspecto de cada galería están puestas para lo que enseñan:
 `0.67` (2:3, el formato de un póster o una portada de libro) en juegos,
-películas y libros, y `1` en música y en el *Top*, que es un mosaico cuadrado.
+películas y libros, y `1` en música, que es un mosaico cuadrado. Las carátulas
+del repo lo confirman: las de juego miden 400x600 y las de disco 400x400.
+
+*Favoritos* es la excepción y **no declara ninguna**, porque es la única página
+que mezcla las dos formas. `imageAspectRatio` recorta (`object-fit: cover`), así
+que fijarla a `0.67` le comería un tercio del ancho a cada portada de disco y
+fijarla a `1` le cortaría la cabeza a los pósters. Sin declararla, cada
+carátula se pinta entera con su forma y lo que se paga es que las tarjetas de
+una fila no midan todas lo mismo. Recortar es peor que descuadrar.
 
 ## Cómo voy
 
@@ -413,22 +457,33 @@ scripts/estado.py --detalle        # además, qué ficha le falta cada cosa
 ```
 FICHAS
               total  borrador  publicadas  con texto
-  juegos         44        44           0          0
-  pelis          37        37           0          0
+  juegos         44         0          44          0
+  pelis          37         0          37          0
+  libros          3         0           3          0
+  musica          6         0           6          6
+             —————— ————————— ——————————— ——————————
+  total          90         0          90          6
 
-EN LA WEB  ························  0 de 81
+EN LA WEB  ████████████████████████  90 de 90
 
 SIN RELLENAR
-  nota         44   ███████████·············
-  tags         37   █████████████···········
-  texto        81   ························
+  nota         47   ███████████·············
+  tags         46   ████████████············
+  texto        84   ██······················
 
-NOTAS      10:32  9:1  8:4
-  Top.base pide 9 o más: 33 de 37 fichas con nota entrarían.
+NOTAS      10:38  9:1  8:4
+
+FAVORITOS  ████····················  15 de 90
+  juegos        6
+  pelis         0
+  libros        3
+  musica        6
 ```
 
-El corte del *Top* no está escrito en el script: lo lee de `Top.base`, así que si
-cambias el criterio, esta cuenta cambia con él.
+El bloque de **favoritos** está ahí porque `Favoritos.base` y las cuatro vistas
+«Solo favoritos» son las únicas páginas que pueden salir vacías sin que nada
+falle: si una sección marca 0, su pestaña se queda en blanco y solo se ve
+entrando a mirarla.
 
 Avisa además de dos cosas que no se ven de otra manera: fichas que apuntan a una
 imagen que ya no está, e imágenes en `assets/portadas/` que ya no usa ninguna
@@ -439,8 +494,7 @@ sea.
 
 Decidir qué asciendes mirando la web publicada no se puede, porque ahí todavía
 no está: es justo lo que aún no has ascendido. Y mirar ficha por ficha en
-Obsidian tampoco dice cómo va a quedar la galería entera, ni dónde cae el corte
-del *Top*.
+Obsidian tampoco dice cómo va a quedar la galería entera.
 
 ```bash
 scripts/vistazo.py               # el sitio completo, borradores incluidos
@@ -506,9 +560,18 @@ hace que una ficha acabe con los datos de otra.
 
 ## Cosas a medias
 
-- El plugin que renderiza las Bases solo trae sus textos en inglés. El único que
-  se veía era el contador de resultados, y está oculto por CSS. Si algún día
-  aparece otro, habrá que traducirlo a mano.
+- El plugin que renderiza las Bases solo trae sus textos en inglés. Se ven dos:
+  el contador de resultados, oculto por CSS, y el «No data found.» de una vista
+  vacía, reescrito en castellano desde `quartz/styles/custom.scss`. Si algún día
+  aparece un tercero, habrá que hacer lo mismo con él.
+- **Series y anime no tienen sección.** No es por falta de fuente: la API de
+  [AniList](https://anilist.co) responde sin clave ni registro y da el id, el
+  año, el estudio y la carátula, comprobado. Es que es una sección entera
+  (fuente, `.base`, índice, pruebas y documentación) y no un retoque, así que
+  se hará aparte.
+- Las 84 fichas sin texto salen en la web con el cuerpo en blanco. El buscador
+  las encuentra igual, por el título, desde que `includeEmptyFiles` está en
+  `true`; lo que falta es lo que ningún script puede escribir.
 - El export de Steam ha cambiado de formato varias veces, así que el importador
   rastrea el JSON entero buscando cosas con `appid` y nombre en vez de dar por
   buena una ruta concreta. Si algún día deja de encontrarlos, es ahí.

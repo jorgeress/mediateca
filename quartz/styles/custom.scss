@@ -6,6 +6,27 @@
   display: none;
 }
 
+// El otro que se cuela es el "No data found." de una vista sin resultados,
+// que en una web en castellano canta. No hay opcion para cambiarlo, asi que se
+// vuelve transparente el original (que mantiene el alto de la caja) y se pinta
+// el nuestro encima.
+//
+// El selector tiene que ser el hijo directo de .bases-view: el plugin usa la
+// misma clase .bases-empty para el guion de una celda vacia de la tabla, y sin
+// acotarlo cada casilla sin nota diria "Aqui todavia no hay nada".
+.bases-view > .bases-empty {
+  position: relative;
+  color: transparent;
+  user-select: none;
+
+  &::after {
+    content: "Aquí todavía no hay nada.";
+    position: absolute;
+    inset: 24px 0 auto 0;
+    color: var(--darkgray);
+  }
+}
+
 .bases-view-tabs {
   gap: 0.25rem;
   margin-bottom: 1.2rem;

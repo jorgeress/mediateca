@@ -255,8 +255,12 @@ tuyas dentro te gusta más que uno con una suelta, y eso es un dato, no una
 suposición. El umbral son tres canciones y se mueve con `--min-favoritas`.
 
 La vista «Por tus canciones» de `content/Musica.base` ordena por esa cuenta, que
-es la mecánica de un Top puesta donde de verdad tiene sentido: en música, que es
+es la mecánica de un top puesta donde de verdad tiene sentido: en música, que es
 la única sección donde tienes miles de cosas marcadas y ninguna nota.
+
+El campo se puede escribir a mano igual de bien, sin export de por medio: pones
+las canciones en el cuerpo de la ficha y `favoritas` con cuántas son. Está
+contado en el README, en «Un disco y tus canciones».
 
 Lo que **no** se puede en ningún caso: sacar una nota tuya. Spotify no tiene
 puntuaciones.

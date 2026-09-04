@@ -17,7 +17,6 @@ views:
     name: Todo junto
     image: note.portada
     cardSize: 200
-    imageAspectRatio: 0.67
     order:
       - file.name
       - note.autor
