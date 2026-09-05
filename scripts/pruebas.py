@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import datos
 import importar
-import mediateca as m
+import vitrina as m
 import nueva
 
 

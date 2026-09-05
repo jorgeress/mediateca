@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cómo va la mediateca: qué hay, qué falta y qué se publica.
+"""Cómo va Vitrina: qué hay, qué falta y qué se publica.
 
 Las galerias enseñan lo que hay. Esto enseña lo que **no** hay, que es lo que
 hace falta para saber por donde seguir: cuantas fichas siguen en borrador, a
@@ -19,7 +19,7 @@ import re
 import sys
 from collections import Counter, defaultdict
 
-from mediateca import (FRONT_RE, PORTADAS, SECCIONES, VAULT, frontmatter, vacio)
+from vitrina import (FRONT_RE, PORTADAS, SECCIONES, VAULT, frontmatter, vacio)
 
 # Los que hacen falta para que una ficha este completa de verdad.
 CAMPOS = ("year", "autor", "nota", "portada", "tags")

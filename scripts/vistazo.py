@@ -25,12 +25,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-from mediateca import RAIZ, VAULT
+from vitrina import RAIZ, VAULT
 
 # Fuera del repo a proposito, y no en una carpeta oculta de la raiz: el glob de
 # Quartz se salta los directorios que empiezan por punto y ademas respeta el
 # .gitignore, asi que una copia dentro y anotada ahi no se encontraria sola.
-VISTAZO = Path(tempfile.gettempdir()) / "mediateca-vistazo"
+VISTAZO = Path(tempfile.gettempdir()) / "vitrina-vistazo"
 
 PUERTO = 8081  # el 8080 lo usa `npx quartz build --serve`, el sitio de verdad
 

@@ -1,4 +1,4 @@
-"""Lo que comparten los scripts de la mediateca: rutas, fichas y peticiones."""
+"""Lo que comparten los scripts de Vitrina: rutas, fichas y peticiones."""
 
 import difflib
 import json
@@ -16,7 +16,7 @@ PORTADAS = VAULT / "assets" / "portadas"
 # Carpeta de la vault -> valor del campo `tipo` de la ficha.
 SECCIONES = {"juegos": "juego", "pelis": "peli", "libros": "libro", "musica": "album"}
 
-UA = "mediateca/1.0 (https://github.com/jorgeress/mediateca)"
+UA = "vitrina/1.0 (https://github.com/jorgeress/vitrina)"
 
 FRONT_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 

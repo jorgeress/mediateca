@@ -26,7 +26,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from mediateca import (PORTADAS, SECCIONES, VAULT, articulo_html, articulos_ingleses,
+from vitrina import (PORTADAS, SECCIONES, VAULT, articulo_html, articulos_ingleses,
                        asegurar_letterboxd, escribir_campos, ficha_letterboxd,
                        frontmatter, normal, pedir, slug)
 

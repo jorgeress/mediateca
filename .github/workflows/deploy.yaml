@@ -1,4 +1,4 @@
-name: Publicar mediateca
+name: Publicar Vitrina
 
 on:
   push:

@@ -1,4 +1,4 @@
-# Mediateca
+# Vitrina
 
 Mi colección personal de juegos, películas, libros y discos, escrita en Obsidian
 y publicada como web estática.
@@ -93,7 +93,7 @@ docs/
 scripts/
   nueva.py          busca una obra suelta y deja la ficha entera
   importar.py       vuelca de golpe Letterboxd, Steam, Spotify y ListenBrainz
-  mediateca.py      lo que comparten todos los scripts
+  vitrina.py        lo que comparten todos los scripts
   portadas.py       baja las carátulas y rellena el campo `portada`
   datos.py          rellena año, autor y tags desde Steam y Letterboxd
   vistazo.py        levanta el sitio con los borradores dentro
@@ -112,8 +112,8 @@ cómodamente, [Obsidian](https://obsidian.md). Nada más: ni Docker, ni Ruby, ni
 claves de API para arrancar.
 
 ```bash
-git clone https://github.com/jorgeress/mediateca.git
-cd mediateca
+git clone https://github.com/jorgeress/vitrina.git
+cd vitrina
 npm ci --ignore-scripts --include=optional
 npm run install-plugins
 npx quartz build --serve
@@ -139,7 +139,7 @@ funcionan desde el primer arranque.
 ### Publicarlo bajo tu propia cuenta
 
 1. Haz un *fork* del repo, o clónalo y súbelo al tuyo.
-2. En `quartz.config.yaml`, cambia `baseUrl` por `tuusuario.github.io/mediateca`.
+2. En `quartz.config.yaml`, cambia `baseUrl` por `tuusuario.github.io/vitrina`.
 3. En `Settings → Pages` del repo, pon *Source* en **GitHub Actions**.
 4. Empuja a `main`. El workflow de `.github/workflows/deploy.yaml` construye y
    despliega solo.

@@ -12,7 +12,7 @@ lugar a dudas, y las peliculas por el mismo id de Letterboxd del que sale
 el cartel, que Wikidata solo da cuando no hay duda de cual es. Antes que
 rellenar una ficha con los datos de otra obra, se deja vacia.
 
-Como todo lo demas de la mediateca, no pide clave ni registro.
+Como todo lo demas de Vitrina, no pide clave ni registro.
 
   juegos  Steam, ficha de la tienda: year, autor y tags
   pelis   Letterboxd: autor, o sea la direccion
@@ -31,7 +31,7 @@ import sys
 import time
 from pathlib import Path
 
-from mediateca import (SECCIONES, VAULT, articulo_html, articulos_ingleses,
+from vitrina import (SECCIONES, VAULT, articulo_html, articulos_ingleses,
                        asegurar_letterboxd, escribir_campos, ficha_letterboxd,
                        frontmatter, pedir, vacio)
 

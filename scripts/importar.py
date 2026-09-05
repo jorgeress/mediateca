@@ -43,7 +43,7 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 import nueva
-from mediateca import ESTADOS, escribir_ficha, parecidos, pedir
+from vitrina import ESTADOS, escribir_ficha, parecidos, pedir
 
 # Umbrales del modo rapido. Ninguna fuente sabe si algo te gusto salvo
 # Letterboxd, asi que el resto se criba por la unica senal que dan: el uso.

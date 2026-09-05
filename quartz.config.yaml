@@ -1,12 +1,12 @@
 # yaml-language-server: $schema=./quartz/plugins/quartz-plugins.schema.json
 configuration:
-  pageTitle: Mediateca
+  pageTitle: Vitrina
   pageTitleSuffix: ""
   enableSPA: true
   enablePopovers: true
   analytics: null
   locale: es-ES
-  baseUrl: jorgeress.github.io/mediateca
+  baseUrl: jorgeress.github.io/vitrina
   ignorePatterns:
     - private
     - templates
@@ -212,7 +212,7 @@ plugins:
     enabled: true
     options:
       links:
-        GitHub: https://github.com/jorgeress/mediateca
+        GitHub: https://github.com/jorgeress/vitrina
         Hecho con Quartz: https://quartz.jzhao.xyz
     layout:
       position: footer

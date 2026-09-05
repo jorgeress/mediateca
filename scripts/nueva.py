@@ -34,7 +34,7 @@ import sys
 import urllib.parse
 
 from datos import datos_juego
-from mediateca import (ESTADOS, PORTADAS, SECCIONES, VAULT, escribir_campos,
+from vitrina import (ESTADOS, PORTADAS, SECCIONES, VAULT, escribir_campos,
                        escribir_ficha, ficha_letterboxd, nombre_de_fichero,
                        parecidos, pedir, peliculas_wikidata, preguntar, slug)
 from portadas import FUENTES as CARATULAS, guardar

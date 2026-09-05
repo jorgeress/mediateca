@@ -366,4 +366,4 @@ scripts/importar.py --dry-run ...                               # sin escribir
   relleno desde el `FUENTES` de `scripts/datos.py`, donde cada sección dice qué
   campos sabe completar. Añadir
   una sección nueva es añadir una entrada en `SECCIONES`, en
-  `scripts/mediateca.py`, y un `.base` que la filtre.
+  `scripts/vitrina.py`, y un `.base` que la filtre.

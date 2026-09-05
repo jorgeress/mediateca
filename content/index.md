@@ -1,5 +1,5 @@
 ---
-title: Mediateca
+title: Vitrina
 ---
 
 Mi colección personal de lo que juego, veo, leo y escucho. Sin pretensión de

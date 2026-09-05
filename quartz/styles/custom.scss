@@ -1,4 +1,4 @@
-// Mediateca: ajustes propios sobre el tema base de Quartz
+// Vitrina: ajustes propios sobre el tema base de Quartz
 
 // El plugin de bases solo trae textos en ingles, asi que el contador
 // "Showing N of N entries" se oculta en vez de mostrarse sin traducir.
@@ -122,4 +122,22 @@
 // Rejilla de secciones de la portada
 .bases-board {
   gap: 1rem;
+}
+
+// Favoritos es la unica pagina que mezcla las dos formas de portada: los
+// posters verticales (0.67) y las caratulas cuadradas de los discos. Sin
+// aspect-ratio cada imagen se pinta con su forma, y los titulos de una misma
+// fila no se alinean; ponerlo en el .base tampoco vale, porque el plugin pinta
+// las imagenes con object-fit: cover y recortaria a unos o a otros.
+//
+// Asi que la caja se iguala aqui, al mismo 0.67 que las galerias de seccion, y
+// la imagen se encaja entera dentro. Los posters llenan la caja exacta; los
+// discos quedan centrados sobre el gris de fondo, que hace de paspartu. Nada
+// se recorta y las filas miden lo mismo.
+body[data-slug^="favoritos"] .bases-card-image {
+  aspect-ratio: 0.67;
+
+  img {
+    object-fit: contain;
+  }
 }
