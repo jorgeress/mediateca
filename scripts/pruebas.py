@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import datos
 import importar
+import textos
 import vitrina as m
 import nueva
 
@@ -238,6 +239,86 @@ class CancionesEnDiscos(unittest.TestCase):
         dentro, fuera = importar.criba(discos, args)
         self.assertEqual(len(dentro), 3)
         self.assertEqual(fuera, {})
+
+
+class TextosDeDiscos(unittest.TestCase):
+    """Reescribir el cuerpo de un disco sin perderle una sola favorita.
+
+    Es lo unico de una ficha de musica que no se puede volver a buscar en
+    ningun sitio: la lista de canciones la da MusicBrainz siempre, pero cuales
+    le gustan a el solo lo sabe el fichero. Todo lo de aqui mordio de verdad al
+    pasarlo sobre los seis discos.
+    """
+
+    VIEJO = "\nMis canciones de este disco:\n\n- Welcome to the Black Parade\n- I Don't Love You\n"
+
+    def test_lee_las_favoritas_del_formato_viejo(self):
+        self.assertEqual(textos.favoritas_escritas(self.VIEJO),
+                         ["Welcome to the Black Parade", "I Don't Love You"])
+
+    def test_el_apostrofo_tipografico_no_pierde_una_favorita(self):
+        # El caso real: el escribio "I Don't Love You" con el apostrofo recto y
+        # MusicBrainz lo tiene con el tipografico. Comparando en crudo, esa
+        # favorita se quedaba sin estrella y su eleccion desaparecia sin avisar.
+        cuerpo = textos.cuerpo_disco(
+            ["The End.", "I Don’t Love You", "Cancer"],
+            ["I Don't Love You"])
+        self.assertIn("2. I Don’t Love You ★", cuerpo)
+
+    def test_una_segunda_pasada_no_borra_las_estrellas(self):
+        # Si favoritas_escritas solo supiera leer el formato viejo, volver a
+        # pasar el script sobre un disco ya hecho le dejaria el cuerpo sin una
+        # sola favorita.
+        primera = textos.cuerpo_disco(["Nude", "Reckoner"], ["Reckoner"])
+        self.assertEqual(textos.favoritas_escritas(primera), ["Reckoner"])
+        segunda = textos.cuerpo_disco(["Nude", "Reckoner"],
+                                      textos.favoritas_escritas(primera))
+        self.assertEqual(primera, segunda)
+
+    def test_una_cancion_repetida_solo_se_estrella_una_vez(self):
+        # La edicion de My Beautiful Dark Twisted Fantasy que lista MusicBrainz
+        # trae "Runaway" dos veces, y su unica favorita salia estrellada dos.
+        cuerpo = textos.cuerpo_disco(["Power", "Runaway", "Blame Game", "Runaway"],
+                                     ["Runaway"])
+        self.assertEqual(cuerpo.count("★"), 2)  # la pista y la linea que lo explica
+        self.assertIn("2. Runaway ★", cuerpo)
+        self.assertIn("4. Runaway\n", cuerpo)
+
+    def test_una_favorita_que_no_esta_en_la_edicion_no_se_tira(self):
+        cuerpo = textos.cuerpo_disco(["Nude", "Reckoner"], ["Videotape"])
+        self.assertIn("Videotape", cuerpo)
+        # Y se sigue leyendo como favorita en la pasada siguiente.
+        self.assertIn("Videotape", textos.favoritas_escritas(cuerpo))
+
+    def test_un_disco_sin_favoritas_no_inventa_la_coletilla(self):
+        cuerpo = textos.cuerpo_disco(["Nude", "Reckoner"], [])
+        self.assertNotIn("★", cuerpo)
+        self.assertEqual(textos.favoritas_escritas(cuerpo), [])
+
+
+class TextosCitados(unittest.TestCase):
+    """Lo que no es suyo sale citado y enlazado."""
+
+    def test_la_cita_de_steam_enlaza_su_ficha_de_la_tienda(self):
+        # Steam no da ninguna licencia: la cita con su fuente es lo que la
+        # ampara, asi que un texto suyo sin enlace no debe poder salir.
+        cuerpo = textos.cita("Un juego de prueba.",
+                             "De su [ficha en Steam](https://store.steampowered.com/app/1/)")
+        self.assertTrue(cuerpo.startswith("> [!quote] De qué va"))
+        self.assertIn("store.steampowered.com/app/1/", cuerpo)
+        for linea in cuerpo.splitlines():
+            self.assertTrue(linea.startswith(">"), f"linea fuera del callout: {linea}")
+
+    def test_la_cita_de_wikipedia_nombra_la_licencia(self):
+        # CC BY-SA pide enlazar la fuente y decir la licencia. El enlace al
+        # articulo cubre a los autores, porque su historial es la lista.
+        credito = textos.credito_wikipedia("El viaje de Chihiro")
+        self.assertIn("es.wikipedia.org/wiki/El_viaje_de_Chihiro", credito)
+        self.assertIn("CC BY-SA 4.0", credito)
+
+    def test_las_etiquetas_html_de_steam_no_llegan_a_la_ficha(self):
+        self.assertEqual(textos.limpio("Uno<br>y <strong>dos</strong> &amp; tres"),
+                         "Uno y dos & tres")
 
 
 class Etiquetas(unittest.TestCase):

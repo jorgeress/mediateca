@@ -96,6 +96,7 @@ scripts/
   vitrina.py        lo que comparten todos los scripts
   portadas.py       baja las carátulas y rellena el campo `portada`
   datos.py          rellena año, autor y tags desde Steam y Letterboxd
+  textos.py         escribe el cuerpo: de qué va cada obra, y las canciones
   vistazo.py        levanta el sitio con los borradores dentro
   estado.py         qué hay, qué falta y qué se publica
   pruebas.py        las pruebas de todo lo anterior, sin red
@@ -558,6 +559,78 @@ que señale la obra sin lugar a dudas — el `appid` de Steam, el `letterboxd` q
 resuelve Wikidata — y no donde hay que adivinar por título, que es justo lo que
 hace que una ficha acabe con los datos de otra.
 
+## De qué va cada cosa
+
+Las fichas entraban con la cabecera completa y el cuerpo en blanco. El buscador
+las encontraba por el título, pero abrir una era abrir nada. `scripts/textos.py`
+lo cierra, y saca el texto de la misma fuente que ya identifica la ficha:
+
+| Sección | Fuente | Qué escribe |
+| --- | --- | --- |
+| Juegos | Steam, por `appid` | la descripción corta de la tienda, en español |
+| Películas | Wikipedia en español, por el `letterboxd` que resuelve Wikidata | el primer párrafo del artículo |
+| Música | MusicBrainz, por `mbid` | la lista de canciones del disco |
+| Libros | ninguna todavía | hace falta un campo `wikipedia` en la ficha |
+
+```bash
+scripts/textos.py                    # solo las fichas que estén en blanco
+scripts/textos.py --force            # reescribe también las que ya tengan texto
+scripts/textos.py --seccion pelis    # solo esa carpeta
+scripts/textos.py --dry-run          # dice qué haría, sin pedir ni tocar nada
+```
+
+En la colección de este repo: 44 de 44 juegos, 35 de 37 películas y los 6
+discos. Las dos películas que faltan son de 2025 y 2026, y las dos las dejó
+vacías a propósito: de *The Odyssey* hay una de 1997 y otra de 2016, y ninguna
+es la que toca. Antes vacía que con la sinopsis de otra.
+
+### Lo que no es tuyo va citado, y no todo lo necesita
+
+Es la parte que no es evidente, así que está decidida una vez y por escrito:
+
+- **Steam no da ninguna licencia.** Su descripción es texto suyo con todos los
+  derechos, así que va como cita breve, marcada como tal y con enlace a su
+  ficha de la tienda. La cita no es cortesía: es lo que la ampara.
+- **Wikipedia es CC BY-SA 4.0**, que sí da permiso a cambio de nombrar a los
+  autores, enlazar la fuente y decir la licencia. Se cumplen las tres con el
+  enlace al artículo, cuyo historial es la lista de autores, y el nombre de la
+  licencia enlazado.
+- **MusicBrainz no pide nada.** Sus datos base — artistas, discos y listas de
+  canciones — son CC0, o sea dominio público. Y una lista de títulos son datos,
+  no prosa: no hay redacción de nadie que citar.
+
+Lo que **no** se hace es parafrasear. Reescribir un párrafo ajeno cambiando
+cuatro palabras sigue siendo derivado de su texto, pero ya no parece una cita,
+así que pierde también el amparo. Y deja en la ficha un texto anónimo que
+aparenta ser tuyo, que es justo lo contrario de para lo que existe esto.
+
+Por eso el texto de la fuente va en un *callout* aparte, y no suelto en el
+cuerpo: se ve de un vistazo qué es la sinopsis de fuera y qué escribes tú
+debajo.
+
+### Los discos, y por qué no se les pisa la lista
+
+El cuerpo de un disco tenía solo sus canciones favoritas. Ahora lleva la lista
+entera con una estrella en las suyas, y esa parte se lee del fichero antes de
+reescribirlo, porque es lo único de la ficha que no se puede volver a buscar en
+ningún sitio.
+
+Tiene tres trampas, y las tres mordieron de verdad al pasarlo:
+
+- **El apóstrofo.** Él escribió `I Don't Love You` con el recto y MusicBrainz lo
+  tiene con el tipográfico. Comparando en crudo, esa favorita se quedaba sin
+  estrella y su elección desaparecía sin un aviso. Se compara con `normal()`,
+  que quita acentos y puntuación.
+- **Las ediciones a medias.** De *Three Cheers for Sweet Revenge* hay 19
+  ediciones y la primera no tiene ni una canción, así que se recorren hasta dar
+  con una que traiga la lista.
+- **Las canciones repetidas.** La edición de *My Beautiful Dark Twisted Fantasy*
+  trae «Runaway» dos veces, y su única favorita salía estrellada dos.
+
+Y una favorita que no esté en la edición que lista MusicBrainz no se tira: se
+queda escrita al pie. Todo esto tiene prueba en `scripts/pruebas.py`, porque es
+donde un fallo es silencioso.
+
 ## Cosas a medias
 
 - El plugin que renderiza las Bases solo trae sus textos en inglés. Se ven dos:
@@ -569,9 +642,13 @@ hace que una ficha acabe con los datos de otra.
   año, el estudio y la carátula, comprobado. Es que es una sección entera
   (fuente, `.base`, índice, pruebas y documentación) y no un retoque, así que
   se hará aparte.
-- Las 84 fichas sin texto salen en la web con el cuerpo en blanco. El buscador
-  las encuentra igual, por el título, desde que `includeEmptyFiles` está en
-  `true`; lo que falta es lo que ningún script puede escribir.
+- **Los libros siguen sin texto automático.** Solo guardan `coverid`, que
+  identifica la portada y no la obra. Cruzándolo con la búsqueda de Open Library
+  se llega a la obra sin adivinar — y hace falta, porque de *Noches blancas* la
+  buena es la tercera candidata, no la primera —, pero allí 1 de 3 tiene
+  descripción y está en francés, y Wikidata solo enlaza 1 de 3. Llegar al
+  artículo desde lo que hay hoy exige adivinar por título. En cuanto una ficha
+  de libro lleve un campo `wikipedia`, `textos.py` la rellena como una película.
 - El export de Steam ha cambiado de formato varias veces, así que el importador
   rastrea el JSON entero buscando cosas con `appid` y nombre en vez de dar por
   buena una ruta concreta. Si algún día deja de encontrarlos, es ahí.
