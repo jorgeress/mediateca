@@ -21,11 +21,9 @@ favoritas: 1
 6. Monster
 7. So Appalled
 8. Devil in a New Dress
-9. Runaway ★
+9. Runaway
 10. Hell of a Life
 11. Blame Game
 12. Lost in the World
 13. Who Will Survive in America
 14. Runaway
-
-Las marcadas con ★ son mis favoritas.

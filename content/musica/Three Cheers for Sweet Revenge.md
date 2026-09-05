@@ -13,7 +13,7 @@ favoritas: 1
 
 ## Canciones
 
-1. Helena ★
+1. Helena
 2. Give ’Em Hell, Kid
 3. To the End
 4. You Know What They Do to Guys Like Us in Prison
@@ -26,5 +26,3 @@ favoritas: 1
 11. It’s Not a Fashion Statement, It’s a Deathwish
 12. Cemetery Drive
 13. I Never Told You What I Do for a Living
-
-Las marcadas con ★ son mis favoritas.

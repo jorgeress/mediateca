@@ -97,7 +97,6 @@ scripts/
   portadas.py       baja las carátulas y rellena el campo `portada`
   datos.py          rellena año, autor y tags desde Steam y Letterboxd
   textos.py         escribe el cuerpo: de qué va cada obra, y las canciones
-  canciones.py      junta las canciones con ★ de todos los discos
   autores.py        conecta lo que comparte estudio, dirección o artista
   vistazo.py        levanta el sitio con los borradores dentro
   estado.py         qué hay, qué falta y qué se publica
@@ -266,11 +265,10 @@ completa y no hay que pasar después ni `portadas.py` ni `datos.py`. Lo que la
 fuente no puede saber es lo tuyo, y va en las opciones: `--nota`, `--estado`,
 `--favorito`.
 
-### Un disco y tus canciones
+### Un disco y sus canciones
 
-En el cuerpo de la ficha va **la lista entera** del disco, que la escribe
-`scripts/textos.py` desde MusicBrainz, y una **★** al final de las que son
-tuyas. La cuenta de estrellas está en el campo `favoritas`:
+En el cuerpo de la ficha va la lista entera del disco, que escribe
+`scripts/textos.py` desde MusicBrainz:
 
 ```yaml
 ---
@@ -286,30 +284,25 @@ mbid: 6e335887-60ba-38f0-95af-fae7774336bf
 
 1. 15 Step
 2. Bodysnatchers
-3. Nude ★
-4. Weird Fishes/Arpeggi ★
+3. Nude
+4. Weird Fishes/Arpeggi
 5. All I Need
 ```
 
-Para añadir o quitar una favorita se pone o se quita la ★ en el disco, en
-Obsidian o en el editor que sea. Es lo único que se toca a mano.
+**Los favoritos son de disco entero, no de canción**, con el campo `favorito`
+como en las otras tres secciones. Hubo una versión con una ★ al final de las
+canciones favoritas y una página que las juntaba todas, y se quitó a propósito:
+marcarlas obligaba a editar el fichero **y** pasar un script después, y eso no
+lo puede hacer nadie desde la web publicada. Un `favorito` de disco se cambia
+en un gesto desde Obsidian y se ve online para todo el mundo, que es de lo que
+va esto. Las canciones siguen listadas, que es lo que valía la pena.
 
-Después, `scripts/canciones.py` recoge las estrellas de los seis discos y
-escribe `content/Canciones favoritas.md`, y de paso pone al día el campo `favoritas`
-de cada uno para que no se separe de lo que dice el cuerpo:
-
-```bash
-scripts/canciones.py            # reescribe la página y pone al día las cuentas
-scripts/canciones.py --dry-run  # dice qué pondría, sin tocar nada
-```
-
-**Por qué una página y no una pestaña más.** Un `.base` consulta **fichas**, y
-una canción no es una ficha: es una línea dentro del disco que la lleva. Así
-que «Favoritos» en `Musica.base` son los **discos** favoritos, y las
-**canciones** sueltas necesitan una página escrita por un script. No hay forma
-de que una vista las junte, y por eso desapareció la antigua «Por tus
-canciones», que en realidad ordenaba discos por cuántas favoritas tenían y no
-enseñaba ni una.
+Si algún día vuelven, hay una limitación que conviene recordar: un `.base`
+consulta **fichas**, y una canción no es una ficha, es una línea dentro del
+disco que la lleva. Ninguna vista puede juntarlas; haría falta una página
+escrita por un script. Por eso también desapareció la vista «Por tus
+canciones», que ordenaba discos por cuántas favoritas tenían y no enseñaba ni
+una.
 
 `favoritas` es un número y no una lista porque de ahí salió: cuando el
 importador pliega las dos mil canciones guardadas de un export de Spotify en

@@ -17,8 +17,8 @@ favoritas: 2
 2. Dead!
 3. This Is How I Disappear
 4. The Sharpest Lives
-5. Welcome to the Black Parade ★
-6. I Don’t Love You ★
+5. Welcome to the Black Parade
+6. I Don’t Love You
 7. House of Wolves
 8. Cancer
 9. Mama
@@ -27,5 +27,3 @@ favoritas: 2
 12. Disenchanted
 13. Famous Last Words
 14. Blood
-
-Las marcadas con ★ son mis favoritas.

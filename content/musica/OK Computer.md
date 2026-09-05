@@ -17,7 +17,7 @@ favoritas: 1
 2. Paranoid Android
 3. Subterranean Homesick Alien
 4. Exit Music (for a Film)
-5. Let Down ★
+5. Let Down
 6. Karma Police
 7. Fitter Happier
 8. Electioneering
@@ -25,5 +25,3 @@ favoritas: 1
 10. No Surprises
 11. Lucky
 12. The Tourist
-
-Las marcadas con ★ son mis favoritas.

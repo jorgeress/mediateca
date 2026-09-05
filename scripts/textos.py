@@ -52,7 +52,7 @@ import urllib.parse
 from pathlib import Path
 
 from vitrina import (FRONT_RE, SECCIONES, VAULT, asegurar_letterboxd,
-                     ficha_letterboxd, frontmatter, normal, pedir)
+                     ficha_letterboxd, frontmatter, pedir)
 
 ESPERA = 1.5  # la tienda de Steam corta sobre las 200 peticiones cada 5 minutos
 
@@ -230,39 +230,9 @@ def canciones_musicbrainz(mbid):
     return [], None
 
 
-# Las favoritas de un disco viven en dos formatos, y hay que entender los dos.
-# El viejo, escrito a mano, era una lista de guiones con solo las suyas. El que
-# escribe esto es la lista entera numerada, con una estrella en las suyas.
-ESTRELLADA_RE = re.compile(r"^\s*\d+\.\s+(.+?)\s*★\s*$", re.M)
-GUIONADA_RE = re.compile(r"^\s*[-*]\s+(?:\*\*)?(.+?)(?:\*\*)?\s*★?\s*$", re.M)
-SUELTAS_RE = re.compile(r"^Tambi[eé]n m[ií]as, aunque esta edici[oó]n no las liste: "
-                        r"(.+?)\.\s*$", re.M)
-
-
-def favoritas_escritas(cuerpo):
-    """Sus canciones favoritas, lea el cuerpo que lea.
-
-    Importa que sea reentrante: si al volver a pasar solo supiera leer el
-    formato viejo, la segunda pasada no encontraria ninguna estrella y le
-    borraria las favoritas a los discos que ya estaban hechos.
-    """
-    cuerpo = cuerpo or ""
-    estrelladas = [m.group(1).strip() for m in ESTRELLADA_RE.finditer(cuerpo)]
-    if estrelladas or "★" in cuerpo:
-        sueltas = [t.strip() for m in SUELTAS_RE.finditer(cuerpo)
-                   for t in m.group(1).split(",") if t.strip()]
-        return estrelladas + sueltas
-    return [m.group(1).strip() for m in GUIONADA_RE.finditer(cuerpo)]
-
-
 def texto_album(titulo, campos, md):
-    """Las canciones del disco, con una estrella en las que ya habia marcadas.
-
-    El cuerpo de estos seis discos era solo su lista de favoritas, que es lo
-    unico que no se puede volver a buscar en ningun sitio: se lee primero y se
-    conserva marcada dentro de la lista entera.
-    """
-    del titulo
+    """La lista de canciones del disco, en orden."""
+    del titulo, md
     mbid = campos.get("mbid")
     if not mbid:
         return None, "la ficha no tiene mbid; se pone a mano"
@@ -270,49 +240,20 @@ def texto_album(titulo, campos, md):
     titulos, nombre = canciones_musicbrainz(mbid)
     if not titulos:
         return None, f"MusicBrainz no da la lista de canciones ({mbid})"
-
-    cuerpo_viejo = FRONT_RE.sub("", md.read_text(encoding="utf-8"))
-    suyas = favoritas_escritas(cuerpo_viejo)
-    fuera = [c for c in suyas if normal(c) not in {normal(t) for t in titulos}]
-    aviso = f"  (+{len(fuera)} favorita/s fuera de la edicion, conservadas)" if fuera else ""
-    return cuerpo_disco(titulos, suyas), f"MusicBrainz ({nombre}){aviso}"
+    return cuerpo_disco(titulos), f"MusicBrainz ({nombre})"
 
 
-def cuerpo_disco(titulos, suyas):
-    """La lista entera de canciones, con una estrella en las suyas.
+def cuerpo_disco(titulos):
+    """La lista numerada, aparte para poder probarla sin red ni ficheros.
 
-    Aparte para poder probarla sin red ni ficheros: es donde se pierden las
-    favoritas si algo falla, y ahi un fallo es silencioso.
+    Solo la lista: no hay favoritas por cancion. Se probaron, con una estrella
+    al final de la linea, y se quitaron a peticion suya porque marcarlas exigia
+    editar el fichero y pasar un script, y eso no lo puede hacer nadie desde la
+    web publicada, que es estatica. Los favoritos son de disco entero, con el
+    campo `favorito`, que si se ve online para todo el mundo.
     """
-    # Se compara con normal(), que quita acentos y puntuacion, porque las dos
-    # grafias del apostrofo no son el mismo caracter: el escribio "I Don't Love
-    # You" y MusicBrainz lo tiene como "I Don’t Love You". Comparando en crudo
-    # esa favorita se quedaba sin estrella y su eleccion se perdia sin avisar.
-    marcadas = {normal(c) for c in suyas}
-    # Solo la primera aparicion: hay ediciones que repiten una cancion como
-    # extra -la de My Beautiful Dark Twisted Fantasy trae "Runaway" dos veces-,
-    # y su favorita salia estrellada dos veces siendo una.
-    puestas = set()
-    lineas = []
-    for i, titulo_pista in enumerate(titulos, 1):
-        clave = normal(titulo_pista)
-        estrella = clave in marcadas and clave not in puestas
-        if estrella:
-            puestas.add(clave)
-        lineas.append(f"{i}. {titulo_pista}" + (" ★" if estrella else ""))
-
-    texto = "## Canciones\n\n" + "\n".join(lineas)
-    if suyas:
-        texto += "\n\nLas marcadas con ★ son mis favoritas."
-
-    # Una favorita que no este en la edicion que lista MusicBrainz no se tira:
-    # es lo unico de esta ficha que no se puede volver a buscar en ningun sitio.
-    hay = {normal(t) for t in titulos}
-    sueltas = [c for c in suyas if normal(c) not in hay]
-    if sueltas:
-        texto += ("\n\nTambién mías, aunque esta edición no las liste: "
-                  + ", ".join(sueltas) + ".")
-    return texto
+    lineas = [f"{i}. {t}" for i, t in enumerate(titulos, 1)]
+    return "## Canciones\n\n" + "\n".join(lineas)
 
 
 FUENTES = {"juego": texto_juego, "peli": texto_peli,
@@ -383,10 +324,8 @@ def main():
         titulo = campos.get("title") or md.stem
         nombre = f"{md.parent.name}/{md.stem}"
 
-        # Los discos se reescriben aunque tengan cuerpo: el suyo era la lista de
-        # favoritas, que se conserva dentro de la lista entera. Ver texto_album.
         tiene_texto = bool(FRONT_RE.sub("", texto).strip())
-        if tiene_texto and not args.force and tipo != "album":
+        if tiene_texto and not args.force:
             saltadas += 1
             continue
 

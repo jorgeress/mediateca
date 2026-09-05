@@ -23,6 +23,4 @@ favoritas: 1
 8. Early Sunsets Over Monroeville
 9. This Is the Best Day Ever
 10. Cubicles
-11. Demolition Lovers ★
-
-Las marcadas con ★ son mis favoritas.
+11. Demolition Lovers

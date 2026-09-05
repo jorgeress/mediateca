@@ -26,7 +26,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import datos
 import importar
 import autores
-import canciones
 import textos
 import vitrina as m
 import nueva
@@ -244,58 +243,51 @@ class CancionesEnDiscos(unittest.TestCase):
 
 
 class TextosDeDiscos(unittest.TestCase):
-    """Reescribir el cuerpo de un disco sin perderle una sola favorita.
+    """La lista de canciones de un disco.
 
-    Es lo unico de una ficha de musica que no se puede volver a buscar en
-    ningun sitio: la lista de canciones la da MusicBrainz siempre, pero cuales
-    le gustan a el solo lo sabe el fichero. Todo lo de aqui mordio de verdad al
-    pasarlo sobre los seis discos.
+    Sin favoritas por cancion: se probaron, con una estrella al final de la
+    linea, y se quitaron a peticion suya. Marcarlas exigia editar el fichero y
+    pasar un script, y eso no lo puede hacer nadie desde la web publicada, que
+    es estatica. Los favoritos son de disco entero, con el campo `favorito`.
     """
 
-    VIEJO = "\nMis canciones de este disco:\n\n- Welcome to the Black Parade\n- I Don't Love You\n"
+    def test_la_lista_sale_numerada_y_en_orden(self):
+        self.assertEqual(textos.cuerpo_disco(["Nude", "Reckoner", "Videotape"]),
+                         "## Canciones\n\n1. Nude\n2. Reckoner\n3. Videotape")
 
-    def test_lee_las_favoritas_del_formato_viejo(self):
-        self.assertEqual(textos.favoritas_escritas(self.VIEJO),
-                         ["Welcome to the Black Parade", "I Don't Love You"])
-
-    def test_el_apostrofo_tipografico_no_pierde_una_favorita(self):
-        # El caso real: el escribio "I Don't Love You" con el apostrofo recto y
-        # MusicBrainz lo tiene con el tipografico. Comparando en crudo, esa
-        # favorita se quedaba sin estrella y su eleccion desaparecia sin avisar.
-        cuerpo = textos.cuerpo_disco(
-            ["The End.", "I Don’t Love You", "Cancer"],
-            ["I Don't Love You"])
-        self.assertIn("2. I Don’t Love You ★", cuerpo)
-
-    def test_una_segunda_pasada_no_borra_las_estrellas(self):
-        # Si favoritas_escritas solo supiera leer el formato viejo, volver a
-        # pasar el script sobre un disco ya hecho le dejaria el cuerpo sin una
-        # sola favorita.
-        primera = textos.cuerpo_disco(["Nude", "Reckoner"], ["Reckoner"])
-        self.assertEqual(textos.favoritas_escritas(primera), ["Reckoner"])
-        segunda = textos.cuerpo_disco(["Nude", "Reckoner"],
-                                      textos.favoritas_escritas(primera))
-        self.assertEqual(primera, segunda)
-
-    def test_una_cancion_repetida_solo_se_estrella_una_vez(self):
+    def test_una_cancion_repetida_se_lista_las_dos_veces(self):
         # La edicion de My Beautiful Dark Twisted Fantasy que lista MusicBrainz
-        # trae "Runaway" dos veces, y su unica favorita salia estrellada dos.
-        cuerpo = textos.cuerpo_disco(["Power", "Runaway", "Blame Game", "Runaway"],
-                                     ["Runaway"])
-        self.assertEqual(cuerpo.count("★"), 2)  # la pista y la linea que lo explica
-        self.assertIn("2. Runaway ★", cuerpo)
-        self.assertIn("4. Runaway\n", cuerpo)
+        # trae "Runaway" dos veces: es lo que dice la edicion, y se respeta.
+        cuerpo = textos.cuerpo_disco(["Power", "Runaway", "Blame Game", "Runaway"])
+        self.assertIn("2. Runaway", cuerpo)
+        self.assertIn("4. Runaway", cuerpo)
 
-    def test_una_favorita_que_no_esta_en_la_edicion_no_se_tira(self):
-        cuerpo = textos.cuerpo_disco(["Nude", "Reckoner"], ["Videotape"])
-        self.assertIn("Videotape", cuerpo)
-        # Y se sigue leyendo como favorita en la pasada siguiente.
-        self.assertIn("Videotape", textos.favoritas_escritas(cuerpo))
+    def test_un_disco_sin_canciones_no_revienta(self):
+        self.assertEqual(textos.cuerpo_disco([]), "## Canciones\n\n")
 
-    def test_un_disco_sin_favoritas_no_inventa_la_coletilla(self):
-        cuerpo = textos.cuerpo_disco(["Nude", "Reckoner"], [])
-        self.assertNotIn("★", cuerpo)
-        self.assertEqual(textos.favoritas_escritas(cuerpo), [])
+
+class LoQueEscribeEl(unittest.TestCase):
+    """Su parrafo es lo unico de una ficha que no se puede volver a bajar.
+
+    Por eso `--force` puede rehacer la cita y la lista de canciones, pero no
+    puede tocar lo que haya escrito el. Sin esto, una pasada con --force le
+    borraba el texto sin avisar.
+    """
+
+    def test_force_no_le_borra_el_parrafo_a_una_pelicula(self):
+        cuerpo = ("Me rei con esta desde los catorce.\n\n"
+                  "> [!quote] De qué va\n> Algo.\n>\n> — De [x](y)\n")
+        self.assertEqual(textos.lo_suyo(cuerpo), "Me rei con esta desde los catorce.")
+
+    def test_force_no_le_borra_el_parrafo_a_un_disco(self):
+        # En un disco lo generado es la lista entera desde su encabezado, asi
+        # que sin esto la segunda pasada duplicaria la lista y se comeria lo suyo.
+        cuerpo = "Mi disco favorito.\n\n## Canciones\n\n1. Una\n2. Otra\n"
+        self.assertEqual(textos.lo_suyo(cuerpo), "Mi disco favorito.")
+
+    def test_una_ficha_sin_nada_suyo_da_vacio(self):
+        self.assertEqual(textos.lo_suyo("> [!quote] De qué va\n> Algo.\n"), "")
+        self.assertEqual(textos.lo_suyo(""), "")
 
 
 class AutoresYComas(unittest.TestCase):
@@ -330,36 +322,6 @@ class AutoresYComas(unittest.TestCase):
     def test_sin_autor_no_devuelve_nada(self):
         self.assertEqual(autores.separar(""), [])
         self.assertEqual(autores.separar(None), [])
-
-
-class CancionesFavoritas(unittest.TestCase):
-    """La pagina que junta las canciones sueltas de todos los discos.
-
-    Existe porque un `.base` consulta fichas y no viñetas dentro de una ficha:
-    las canciones no son fichas, asi que no pueden ser una pestaña de
-    Musica.base. Ver scripts/canciones.py.
-    """
-
-    def test_la_tabla_enlaza_el_disco_de_cada_cancion(self):
-        # Del enlace vive la mitad de la gracia: desde la cancion se llega a la
-        # ficha, y en el grafo de Obsidian se ve el haz.
-        md = SimpleNamespace(stem="In Rainbows")
-        tabla = canciones.tabla([(md, {"autor": "Radiohead"}, ["Nude", "Reckoner"])])
-        self.assertIn("[[musica/In Rainbows\\|In Rainbows]]", tabla)
-        self.assertIn("| Nude |", tabla)
-        self.assertIn("| Reckoner |", tabla)
-        self.assertIn("Radiohead", tabla)
-
-    def test_un_disco_sin_autor_no_escribe_none(self):
-        md = SimpleNamespace(stem="Sin nombre")
-        tabla = canciones.tabla([(md, {}, ["Una"])])
-        self.assertNotIn("None", tabla)
-
-    def test_la_pagina_sale_de_las_estrellas_del_disco(self):
-        # El circuito entero: lo que textos.py escribe en un disco es lo que
-        # canciones.py sabe leer. Si los dos formatos se separan, esto casca.
-        cuerpo = textos.cuerpo_disco(["Nude", "Reckoner", "Videotape"], ["Reckoner"])
-        self.assertEqual(textos.favoritas_escritas(cuerpo), ["Reckoner"])
 
 
 class TextosCitados(unittest.TestCase):
