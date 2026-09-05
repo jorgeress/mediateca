@@ -120,9 +120,12 @@ plugins:
       # Las fichas sin texto tambien entran en el buscador: una ficha vacia
       # sigue teniendo titulo, y quien busca "Elden Ring" espera encontrarla.
       # El precio son las cinco paginas sueltas de los .base, que entran con
-      # el titulo del fichero y sin texto. No se pueden sacar: el plugin que
-      # las pinta no lee frontmatter, y meter *.base en ignorePatterns deja
-      # sin galeria a las cinco secciones (comprobado).
+      # el titulo del fichero y sin texto. Del arbol lateral ya se van, con el
+      # filterFn del explorer; de aqui no hay forma de sacarlas. Este plugin no
+      # tiene opcion de filtro, solo respeta data.unlisted, y el que pinta las
+      # bases construye sus paginas con el frontmatter a mano, sin leer el de
+      # nadie. Meter *.base en ignorePatterns deja sin galeria a las cinco
+      # secciones (comprobado).
       includeEmptyFiles: true
   - source: "@quartz-community/favicon"
     enabled: true
@@ -141,6 +144,14 @@ plugins:
     enabled: true
   - source: "@quartz-community/explorer"
     enabled: true
+    options:
+      # El plugin de bases emite una pagina suelta por cada fichero .base, que
+      # repite la galeria que ya esta en el indice de su seccion. Se van del
+      # arbol aqui. El componente hace opts.filterFn?.toString(), asi que una
+      # cadena de YAML le vale igual que una funcion, y el cliente la reconstruye
+      # con new Function. Hay que repetir el filtro de "tags", que es el que
+      # trae por defecto y este sustituye.
+      filterFn: '(node) => node.slugSegment !== "tags" && !node.slugSegment.endsWith(".base")'
     layout:
       position: left
       priority: 50
