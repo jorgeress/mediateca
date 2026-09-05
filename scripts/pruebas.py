@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import datos
 import importar
+import canciones
 import textos
 import vitrina as m
 import nueva
@@ -294,6 +295,36 @@ class TextosDeDiscos(unittest.TestCase):
         cuerpo = textos.cuerpo_disco(["Nude", "Reckoner"], [])
         self.assertNotIn("★", cuerpo)
         self.assertEqual(textos.favoritas_escritas(cuerpo), [])
+
+
+class CancionesFavoritas(unittest.TestCase):
+    """La pagina que junta las canciones sueltas de todos los discos.
+
+    Existe porque un `.base` consulta fichas y no viñetas dentro de una ficha:
+    las canciones no son fichas, asi que no pueden ser una pestaña de
+    Musica.base. Ver scripts/canciones.py.
+    """
+
+    def test_la_tabla_enlaza_el_disco_de_cada_cancion(self):
+        # Del enlace vive la mitad de la gracia: desde la cancion se llega a la
+        # ficha, y en el grafo de Obsidian se ve el haz.
+        md = SimpleNamespace(stem="In Rainbows")
+        tabla = canciones.tabla([(md, {"autor": "Radiohead"}, ["Nude", "Reckoner"])])
+        self.assertIn("[[musica/In Rainbows\\|In Rainbows]]", tabla)
+        self.assertIn("| Nude |", tabla)
+        self.assertIn("| Reckoner |", tabla)
+        self.assertIn("Radiohead", tabla)
+
+    def test_un_disco_sin_autor_no_escribe_none(self):
+        md = SimpleNamespace(stem="Sin nombre")
+        tabla = canciones.tabla([(md, {}, ["Una"])])
+        self.assertNotIn("None", tabla)
+
+    def test_la_pagina_sale_de_las_estrellas_del_disco(self):
+        # El circuito entero: lo que textos.py escribe en un disco es lo que
+        # canciones.py sabe leer. Si los dos formatos se separan, esto casca.
+        cuerpo = textos.cuerpo_disco(["Nude", "Reckoner", "Videotape"], ["Reckoner"])
+        self.assertEqual(textos.favoritas_escritas(cuerpo), ["Reckoner"])
 
 
 class TextosCitados(unittest.TestCase):

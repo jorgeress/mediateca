@@ -58,18 +58,3 @@ views:
     image: note.portada
     cardSize: 220
     imageAspectRatio: 1
-  - type: cards
-    name: Por tus canciones
-    filters:
-      and:
-        - note.favoritas > 0
-    order:
-      - file.name
-      - note.autor
-      - note.favoritas
-    sort:
-      - property: favoritas
-        direction: DESC
-    image: note.portada
-    cardSize: 220
-    imageAspectRatio: 1
