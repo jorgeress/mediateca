@@ -1,7 +1,7 @@
 ---
 tipo: juego
 year: 2018
-autor: QLOC, FromSoftware, Inc.
+autor: QLOC, [[autores/FromSoftware, Inc|FromSoftware, Inc.]]
 nota: 10
 estado: en curso
 favorito: true

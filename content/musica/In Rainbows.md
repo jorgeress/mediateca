@@ -1,7 +1,7 @@
 ---
 tipo: album
 year: 2007
-autor: Radiohead
+autor: "[[autores/Radiohead|Radiohead]]"
 nota:
 estado: terminado
 favorito: true

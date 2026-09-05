@@ -1,7 +1,7 @@
 ---
 tipo: album
 year: 1997
-autor: Radiohead
+autor: "[[autores/Radiohead|Radiohead]]"
 nota:
 estado: terminado
 favorito: true

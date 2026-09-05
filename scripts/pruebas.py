@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import datos
 import importar
+import autores
 import canciones
 import textos
 import vitrina as m
@@ -295,6 +296,40 @@ class TextosDeDiscos(unittest.TestCase):
         cuerpo = textos.cuerpo_disco(["Nude", "Reckoner"], [])
         self.assertNotIn("★", cuerpo)
         self.assertEqual(textos.favoritas_escritas(cuerpo), [])
+
+
+class AutoresYComas(unittest.TestCase):
+    """Partir el campo `autor` sin inventarse estudios que no existen."""
+
+    def test_una_empresa_con_coma_no_son_dos_autores(self):
+        # Mordio de verdad: partiendo por comas a secas, "Inc." salia como el
+        # estudio con mas juegos de la coleccion, cinco, por delante de
+        # FromSoftware. Son sufijos de empresa, no autores.
+        self.assertEqual(autores.separar("FromSoftware, Inc."), ["FromSoftware, Inc."])
+        self.assertEqual(autores.separar("CyberConnect2 Co. Ltd."),
+                         ["CyberConnect2 Co. Ltd."])
+
+    def test_dos_directores_si_son_dos_autores(self):
+        self.assertEqual(autores.separar("Mike Johnson, Tim Burton"),
+                         ["Mike Johnson", "Tim Burton"])
+
+    def test_una_empresa_y_una_persona_a_la_vez(self):
+        # El caso peor de los dos juntos: "Nicalis, Inc." es uno y Edmund otro.
+        self.assertEqual(autores.separar("Nicalis, Inc., Edmund McMillen"),
+                         ["Nicalis, Inc.", "Edmund McMillen"])
+
+    def test_un_autor_ya_enlazado_se_lee_como_su_nombre(self):
+        # De esto depende poder volver a pasar el script sin acabar con
+        # enlaces dentro de enlaces.
+        self.assertEqual(
+            autores.separar("[[autores/Radiohead|Radiohead]]"), ["Radiohead"])
+        self.assertEqual(
+            autores.separar("[[autores/FromSoftware, Inc|FromSoftware, Inc.]]"),
+            ["FromSoftware, Inc."])
+
+    def test_sin_autor_no_devuelve_nada(self):
+        self.assertEqual(autores.separar(""), [])
+        self.assertEqual(autores.separar(None), [])
 
 
 class CancionesFavoritas(unittest.TestCase):

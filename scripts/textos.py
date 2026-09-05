@@ -52,7 +52,7 @@ import urllib.parse
 from pathlib import Path
 
 from vitrina import (FRONT_RE, SECCIONES, VAULT, asegurar_letterboxd,
-                     frontmatter, normal, pedir)
+                     ficha_letterboxd, frontmatter, normal, pedir)
 
 ESPERA = 1.5  # la tienda de Steam corta sobre las 200 peticiones cada 5 minutos
 
@@ -158,13 +158,22 @@ def texto_peli(titulo, campos, md):
         return None, detalle
 
     articulo = articulo_es("P6127", slug_lb)
-    if not articulo:
-        return None, f"Wikidata no le conoce articulo en español ({slug_lb})"
+    if articulo:
+        sinopsis = resumen_wikipedia(articulo)
+        if sinopsis:
+            return cita(sinopsis, credito_wikipedia(articulo)), f"Wikipedia ({articulo})"
 
-    sinopsis = resumen_wikipedia(articulo)
-    if not sinopsis:
-        return None, f"el articulo «{articulo}» no trae resumen"
-    return cita(sinopsis, credito_wikipedia(articulo)), f"Wikipedia ({articulo})"
+    # Sin articulo en español -pasa con lo recien estrenado- queda la ficha de
+    # Letterboxd. Se cita a TMDB y no a ellos porque el texto es de TMDB, a
+    # quien enlazan en su propia pagina; y se avisa de que viene en ingles.
+    ficha = ficha_letterboxd(slug_lb)
+    sinopsis, tmdb = ficha.get("sinopsis"), ficha.get("tmdb")
+    if sinopsis and tmdb:
+        return cita(limpio(sinopsis), f"De [su ficha en TMDB]({tmdb}), en inglés"), \
+            f"TMDB via Letterboxd ({slug_lb})"
+    if not articulo:
+        return None, f"ni articulo en español ni sinopsis en Letterboxd ({slug_lb})"
+    return None, f"el articulo «{articulo}» no trae resumen"
 
 
 def texto_libro(titulo, campos, md):
@@ -312,13 +321,37 @@ FUENTES = {"juego": texto_juego, "peli": texto_peli,
 
 # --- escritura ---------------------------------------------------------------
 
+# Lo que escribe este script, y por tanto lo unico que puede pisar: el bloque
+# de la cita, y la lista de canciones de un disco desde su encabezado al final.
+GENERADO_RE = re.compile(
+    r"^> \[!quote\][^\n]*\n(?:>[^\n]*\n?)*"   # la cita de la fuente
+    r"|^## Canciones\n[\s\S]*\Z",             # la lista entera de un disco
+    re.M)
+
+
+def lo_suyo(cuerpo):
+    """El cuerpo sin lo que genera el script: o sea, lo que ha escrito el.
+
+    De esto depende que `--force` sea seguro. La sinopsis y la lista de
+    canciones las puede volver a bajar el script cuando quiera; su parrafo, no.
+    """
+    return GENERADO_RE.sub("", cuerpo or "").strip()
+
+
 def escribir_cuerpo(md, cuerpo):
-    """Cambia el cuerpo y deja la cabecera exactamente como estaba."""
+    """Pone lo generado sin tocar lo que haya escrito el.
+
+    **Lo suyo va arriba y lo generado debajo**, siempre, en las cuatro
+    secciones. Asi hay un sitio fijo donde escribir que ningun script pisa, y
+    quien entra en una ficha lee primero por que le gusto y luego la referencia.
+    """
     texto = md.read_text(encoding="utf-8")
     m = FRONT_RE.match(texto)
     if not m:
         raise ValueError(f"{md} no tiene cabecera")
-    md.write_text(m.group(0) + "\n" + cuerpo.rstrip() + "\n", encoding="utf-8")
+    suyo = lo_suyo(texto[m.end():])
+    nuevo = (suyo + "\n\n" if suyo else "") + cuerpo.rstrip()
+    md.write_text(m.group(0) + "\n" + nuevo + "\n", encoding="utf-8")
 
 
 def fichas(args):

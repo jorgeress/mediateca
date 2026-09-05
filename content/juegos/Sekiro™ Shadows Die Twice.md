@@ -1,7 +1,7 @@
 ---
 tipo: juego
 year: 2019
-autor: FromSoftware, Inc.
+autor: "[[autores/FromSoftware, Inc|FromSoftware, Inc.]]"
 nota: 10
 estado: en curso
 favorito: true

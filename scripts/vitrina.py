@@ -432,14 +432,24 @@ def letterboxd_id(titulo, year):
                   + ", ".join(f"{c['nombre']} ({c['year']})" for c in candidatas[:3]))
 
 
+# Letterboxd enlaza en la misma pagina a TMDB, que es de donde saca su ficha.
+TMDB_RE = re.compile(r"https://www\.themoviedb\.org/(?:movie|tv)/\d+")
+
+
 def ficha_letterboxd(slug):
-    """Lo que la pagina de la pelicula declara de si misma: cartel y direccion.
+    """Lo que la pagina de la pelicula declara de si misma.
 
     Sale todo de la misma peticion, asi que pedir el cartel es tambien saber
-    quien dirige, sin rascar el HTML ni volver a buscar en ningun sitio.
+    quien dirige, de que va y de que año es, sin volver a buscar en ningun
+    sitio.
+
+    Ojo con `sinopsis`: **ese texto no es de Letterboxd**, es de TMDB, a quien
+    enlazan en la propia pagina. Por eso se devuelve tambien `tmdb`: quien la
+    use tiene que citar a TMDB, no a ellos. Y viene en ingles siempre.
     """
     crudo = pedir(f"https://letterboxd.com/film/{slug}/", binario=True)
-    m = JSONLD_RE.search((crudo or b"").decode("utf-8", "ignore"))
+    html = (crudo or b"").decode("utf-8", "ignore")
+    m = JSONLD_RE.search(html)
     if not m:
         return {}
     try:
@@ -448,6 +458,13 @@ def ficha_letterboxd(slug):
     except json.JSONDecodeError:
         return {}
     cartel = datos.get("image") or ""
+    # El estreno esta en releasedEvent en unas fichas y en dateCreated en
+    # otras: The Odyssey trae releasedEvent a null y la fecha solo en la
+    # segunda, asi que hay que mirar las dos.
+    estrenos = datos.get("releasedEvent") or []
+    estreno = str((estrenos[0].get("startDate") if estrenos else None)
+                  or datos.get("dateCreated") or "")
+    tmdb = TMDB_RE.search(html)
     return {
         "titulo": datos.get("name"),
         # El tamaño va en la propia ruta y viene pedido a 600 de ancho. A 1000
@@ -455,6 +472,9 @@ def ficha_letterboxd(slug):
         # ocupa lo mismo despues de pasar por el WebP de portadas.py.
         "cartel": cartel.replace("-0-600-0-900-crop", "-0-1000-0-1500-crop") or None,
         "direccion": [p.get("name") for p in datos.get("director") or [] if p.get("name")],
+        "sinopsis": datos.get("description") or None,
+        "tmdb": tmdb.group(0) if tmdb else None,
+        "year": int(estreno[:4]) if estreno[:4].isdigit() else None,
     }
 
 

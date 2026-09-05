@@ -1,7 +1,7 @@
 ---
 tipo: peli
 year: 2001
-autor: Hayao Miyazaki
+autor: "[[autores/Hayao Miyazaki|Hayao Miyazaki]]"
 nota: 10
 estado: terminado
 favorito: true

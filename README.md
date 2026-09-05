@@ -98,6 +98,7 @@ scripts/
   datos.py          rellena año, autor y tags desde Steam y Letterboxd
   textos.py         escribe el cuerpo: de qué va cada obra, y las canciones
   canciones.py      junta las canciones con ★ de todos los discos
+  autores.py        conecta lo que comparte estudio, dirección o artista
   vistazo.py        levanta el sitio con los borradores dentro
   estado.py         qué hay, qué falta y qué se publica
   pruebas.py        las pruebas de todo lo anterior, sin red
@@ -593,6 +594,7 @@ lo cierra, y saca el texto de la misma fuente que ya identifica la ficha:
 | --- | --- | --- |
 | Juegos | Steam, por `appid` | la descripción corta de la tienda, en español |
 | Películas | Wikipedia en español, por el `letterboxd` que resuelve Wikidata | el primer párrafo del artículo |
+| Películas sin artículo | TMDB, por la ficha de Letterboxd | su sinopsis, en inglés |
 | Música | MusicBrainz, por `mbid` | la lista de canciones del disco |
 | Libros | ninguna todavía | hace falta un campo `wikipedia` en la ficha |
 
@@ -603,10 +605,44 @@ scripts/textos.py --seccion pelis    # solo esa carpeta
 scripts/textos.py --dry-run          # dice qué haría, sin pedir ni tocar nada
 ```
 
-En la colección de este repo: 44 de 44 juegos, 35 de 37 películas y los 6
-discos. Las dos películas que faltan son de 2025 y 2026, y las dos las dejó
-vacías a propósito: de *The Odyssey* hay una de 1997 y otra de 2016, y ninguna
-es la que toca. Antes vacía que con la sinopsis de otra.
+En la colección de este repo: **las 90**.
+
+Lo recién estrenado no tiene artículo en la Wikipedia española, así que ahí se
+cae al respaldo: la sinopsis que Letterboxd enseña en su ficha. **Ese texto no
+es de Letterboxd, es de TMDB**, a quien enlazan en su propia página, así que es
+a TMDB a quien se cita. Viene en inglés y la cita lo dice.
+
+*The Odyssey* pedía además resolver su id a mano, porque Wikidata todavía no lo
+tiene: se aceptó `the-odyssey-2026` sólo después de comprobar contra su propia
+página que era de 2026 y de Christopher Nolan, que es lo que decía la ficha. El
+slug sin sufijo, `the-odyssey`, es la de 1997 de Konchalovsky.
+
+### Dónde va lo que escribes tú
+
+**Lo tuyo va arriba y lo generado debajo**, en las cuatro secciones. No hay que
+marcarlo con nada: escribes en el cuerpo, encima de la cita o de la lista de
+canciones, y ya está.
+
+```markdown
+---
+tipo: peli
+---
+
+Me reí con esta desde los catorce y no he parado.
+
+> [!quote] De qué va
+> Zoolander es una comedia cinematográfica estadounidense de 2001…
+>
+> — De «Zoolander» en Wikipedia, bajo CC BY-SA 4.0
+```
+
+`textos.py` **sólo pisa lo que ha escrito él**: el bloque de la cita, y la
+lista de canciones de un disco desde su encabezado. Todo lo demás se conserva
+tal cual, incluso con `--force`. La sinopsis se puede volver a bajar mil veces;
+tu párrafo no, así que es lo único que el script no toca.
+
+El orden también es a propósito: quien entra en una ficha lee primero por qué
+te gustó, que es para lo que existe el sitio, y luego la referencia. Antes vacía que con la sinopsis de otra.
 
 ### Lo que no es tuyo va citado, y no todo lo necesita
 
@@ -655,6 +691,52 @@ Y una favorita que no esté en la edición que lista MusicBrainz no se tira: se
 queda escrita al pie. Todo esto tiene prueba en `scripts/pruebas.py`, porque es
 donde un fallo es silencioso.
 
+## Lo que comparte estudio, dirección o artista
+
+Obsidian agrupa por **enlaces**, no por campos: dos juegos con `autor:
+FromSoftware` escrito exactamente igual no están conectados de ninguna manera,
+ni en el grafo ni en los backlinks. `scripts/autores.py` convierte ese campo en
+un enlace y escribe la página del autor con lo suyo listado:
+
+```yaml
+autor: "[[autores/Quentin Tarantino|Quentin Tarantino]]"
+```
+
+```bash
+scripts/autores.py             # enlaza y reescribe las páginas de autor
+scripts/autores.py --minimo 1  # enlaza a todos, tengan una obra o veinte
+scripts/autores.py --deshacer  # quita los enlaces y deja el nombre pelado
+scripts/autores.py --dry-run   # dice qué haría, sin tocar nada
+```
+
+**Sólo se enlaza a quien tenga dos obras o más.** De los 92 autores de esta
+colección, sólo 5 repiten: FromSoftware, My Chemical Romance, Radiohead, Hayao
+Miyazaki y Quentin Tarantino. Enlazar a los otros 87 sería crear 87 páginas que
+no agrupan nada y doblar el tamaño del sitio en callejones sin salida. Al crecer
+la colección basta con volver a pasarlo: el que llegue a dos se enlaza solo.
+
+### La coma no vale como separador
+
+Es la trampa del campo, y significa las dos cosas a la vez:
+
+```
+"Mike Johnson, Tim Burton"        dos directores
+"FromSoftware, Inc."              un solo estudio
+"Nicalis, Inc., Edmund McMillen"  las dos cosas en el mismo campo
+```
+
+Partiendo por comas a secas, **«Inc.» salía como el estudio con más juegos de la
+colección**, cinco, por delante de FromSoftware. Lo que decide es si el trozo
+siguiente es un sufijo de empresa (`Inc.`, `Ltd.`, `S.L.`…), en cuyo caso se
+vuelve a pegar al anterior. Tiene prueba, por si algún día alguien lo
+«simplifica».
+
+Las páginas de `content/autores/` son derivadas y se reescriben enteras en cada
+pasada, así que no se editan a mano. El campo `autor` sí es tuyo: el script le
+pone o le quita el enlace alrededor, nunca cambia el nombre. Y ojo, que
+`datos.py` reescribe `autor` en texto plano desde Steam y Letterboxd: si lo
+pasas después, vuelve a pasar `autores.py`.
+
 ## Cosas a medias
 
 - El plugin que renderiza las Bases solo trae sus textos en inglés. Se ven dos:
@@ -666,13 +748,12 @@ donde un fallo es silencioso.
   año, el estudio y la carátula, comprobado. Es que es una sección entera
   (fuente, `.base`, índice, pruebas y documentación) y no un retoque, así que
   se hará aparte.
-- **Los libros siguen sin texto automático.** Solo guardan `coverid`, que
-  identifica la portada y no la obra. Cruzándolo con la búsqueda de Open Library
-  se llega a la obra sin adivinar — y hace falta, porque de *Noches blancas* la
-  buena es la tercera candidata, no la primera —, pero allí 1 de 3 tiene
-  descripción y está en francés, y Wikidata solo enlaza 1 de 3. Llegar al
-  artículo desde lo que hay hoy exige adivinar por título. En cuanto una ficha
-  de libro lleve un campo `wikipedia`, `textos.py` la rellena como una película.
+- **Los libros necesitan que alguien diga cuál es el artículo.** Solo guardan
+  `coverid`, que identifica la portada y no la obra, y desde ahí no se llega a
+  un texto sin adivinar: en Open Library 1 de 3 tiene descripción y está en
+  francés, y Wikidata solo enlaza 1 de 3. Los tres de esta colección llevan ya
+  un campo `wikipedia`, puesto tras comprobar contra Wikidata que el autor del
+  artículo era el de la ficha. Uno nuevo hay que resolverlo igual.
 - El export de Steam ha cambiado de formato varias veces, así que el importador
   rastrea el JSON entero buscando cosas con `appid` y nombre en vez de dar por
   buena una ruta concreta. Si algún día deja de encontrarlos, es ahí.
