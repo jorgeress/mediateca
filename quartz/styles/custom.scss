@@ -131,13 +131,34 @@
 // las imagenes con object-fit: cover y recortaria a unos o a otros.
 //
 // Asi que la caja se iguala aqui, al mismo 0.67 que las galerias de seccion, y
-// la imagen se encaja entera dentro. Los posters llenan la caja exacta; los
-// discos quedan centrados sobre el gris de fondo, que hace de paspartu. Nada
-// se recorta y las filas miden lo mismo.
+// la imagen se encaja entera dentro. Nada se recorta y las filas miden lo mismo.
+//
+// El plugin pinta esa caja con background: var(--lightgray), asi que lo que la
+// portada no llenaba se veia como una banda gris arriba y abajo. Se pone del
+// color de la tarjeta y el borde desaparece: la portada queda flotando sobre el
+// fondo de la ficha. Si algun dia se prefiere el aspecto de lamina enmarcada,
+// es volver a var(--lightgray) y anadir un padding aqui mismo.
 body[data-slug^="favoritos"] .bases-card-image {
   aspect-ratio: 0.67;
+  background: var(--light);
 
   img {
     object-fit: contain;
   }
+}
+
+// La linea "Creado con Quartz vX (c) ANO" la escribe el componente del pie y no
+// tiene opcion para quitarla, asi que se oculta y se pone la nuestra encima. La
+// licencia MIT de Quartz pide conservar el aviso de copyright en el codigo
+// fuente, que sigue en LICENSE.txt; no pide dar credito en la web.
+footer > p {
+  display: none;
+}
+
+footer::before {
+  content: "© 2026 jorgeress";
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--gray);
+  font-size: 0.85rem;
 }

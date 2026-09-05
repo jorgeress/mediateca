@@ -213,7 +213,6 @@ plugins:
     options:
       links:
         GitHub: https://github.com/jorgeress/vitrina
-        Hecho con Quartz: https://quartz.jzhao.xyz
     layout:
       position: footer
       priority: 50

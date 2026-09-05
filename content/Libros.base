@@ -40,7 +40,7 @@ views:
     summaries:
       nota: Average
   - type: cards
-    name: Solo favoritos
+    name: Favoritos
     filters:
       and:
         - note.favorito == true
